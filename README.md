@@ -14,5 +14,5 @@ The primary benefits of this system in its early stages are:
 * No specific app required!
   * Newer phones recognize the QR code directly from the camera app
 * Flexibility:
-  * Basically just a web request, so users could also be provided the URL for storage in other locations (TXT)
+  * Basically just a web request, so users could also be provided the URL (via text or other communication channels) for storage in other locations.
   * Contractors could be sent a text to click once the arrived on location, do the same when leaving
