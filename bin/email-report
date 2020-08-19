@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+ds=$(date +'%Y-%m-%d')
+url="https://covidqr.eri.ucsb.edu/ReportDay.php?Mode=email&Date=$ds"
+contents=/tmp/contents.email
+
+for email in "$@"; do
+    boundStr="boundary-string"
+    cat /dev/null > $contents
+    echo "From: root@spin.eri.ucsb.edu" >> $contents
+    echo "To: $email" >> $contents
+    echo "Subject: Daily QR Scanning report" >> $contents
+    echo "Content-Type: multipart/alternative; boundary=\"${boundStr}\"" >> $contents
+    #echo "Content-Type: multipart/mixed; boundary=\"${boundStr}\"" >> $contents
+    echo "" >> $contents
+    echo "Hey There, this is the preamble and should get ignored" >> $contents
+    echo "--${boundStr}" >> $contents
+    echo "Content-Type: text/plain; charset=\"utf-8\"" >> $contents
+    echo "Content-Transfer-Encoding: quoted-printable" >> $contents
+    echo "Content-Disposition: inline" >> $contents
+    echo "" >> $contents
+    echo "No Plain text version available" >> $contents
+    echo "" >> $contents
+    echo "--${boundStr}" >> $contents
+    echo "Content-Type: text/html; charset=\"utf-8\"" >> $contents
+    echo "Content-Transfer-Encoding: quoted-printable" >> $contents
+    echo "Content-Disposition: inline" >> $contents
+    echo "" >> $contents
+    wget -q -O - "$url" >> $contents
+    echo "--${boundStr}--" >> $contents
+    echo "This is the epilogue which should also be ignored." >> $contents
+    sendmail -t < $contents
+done

@@ -1,0 +1,323 @@
+html {
+}
+body {
+    background-color: #ddd;
+    font-family: arial, helvetica, sans-serif;
+}
+header {
+    background-color: #ffc;
+    display: inline-block;
+    padding: 0px;
+    margin: 0px;
+}
+nav {
+    background-color: #ffc;
+    display: inline-block;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+a.nav {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 2px;
+    margin-right: 2px;
+    // border: 1px solid gray;
+}
+header h1 {
+    font-size: 80%;
+    text-align: center;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+h2 {
+    font-size: 120%;
+    text-align: center;
+}
+h3 {
+    font-size: 100%;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+footer {
+    font-size: 75%;
+    background-color: #ffc;
+
+}
+footer p {
+    color:  blue;
+    margin: 0;
+    text-align: center;
+}
+em {
+    color: #00a;
+}
+.qrs-container {
+    border: 4px solid #60a;
+    border-radius: 8px;
+    padding: 5px;
+    margin: 8px;
+    width: auto;
+    display: inline-block;
+}
+.qr-container {
+    display: inline-block;
+    border: 2px solid #00a;
+    border-radius: 8px;
+    padding: 10px;
+}
+.qr-image {
+    display: inline-block;
+    height: auto;
+    width: auto;
+    max-width: 300px;
+    max-height: 300px;
+}
+.qr-info {
+    vertical-align: top;
+    font-family: helvetica, arial, sans-serif;
+    font-weight: bold;
+    font-size: 1.2em;
+    display: inline-block;
+    padding: 10px;
+}
+.qr-form-container {
+    display: inline-block;
+}
+.qr-form-col {
+    display: inline-block;
+
+}
+table.qr-data-table {
+    border-collapse: collapse;
+}
+.qr-data-table-header-row {
+    background-color: yellow;
+}
+.qr-data-table-td {
+    border: 1px solid blue;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.an-data-ds-container {
+    border: 4px solid #60a;
+    border-radius: 8px;
+    padding: 5px;
+    margin: 8px;
+    width: auto;
+    display: inline-block;
+}
+.an-data-dsid-container {
+    border: 1px solid #60a;
+    border-radius: 8px;
+    padding: 5px;
+    margin: 8px;
+    width: auto;
+}
+.status-paired {
+    background-color: #6f6;
+}
+.status-still-working {
+    background-color: cyan;
+}
+.status-problematic {
+    background-color: #f66;
+}
+.status-uknown {
+    background-color: gray;
+}
+table.confirmation {
+    padding-left: 10px;
+}
+table.confirmation tr td {
+    padding-left: 10px;
+}
+.confirmation {
+    font-size: 2.5em;
+}
+.done {
+    text-decoration: line-through;
+}
+.success {
+    background-color: #6f6;
+}
+.failure {
+    background-color: #f66;
+}
+.ambiguous {
+    background-color: #ff6;
+}
+.problematic {
+    background-color: #fb8;
+}
+.entry-confirmation {
+    padding: 10px;
+    margin: 10px;
+    border: 3px solid #444;
+    border-radius: 8px;
+}
+.UCSBNetID {
+    text-align: right;
+    width: 200px;
+}
+.Status {
+    text-align: center;
+    width: 125px;
+}
+.stay {
+    text-align: right;
+}
+.hrstay {
+    text-align: right;
+}
+.Building {
+    text-align: center;
+}
+
+/* Status Column coloring */
+.UNPAIR-OUT {
+    background-color: #f66;
+}
+.PAIRED {
+    background-color: #6f6;
+}
+.TESTING {
+    background-color: #a8f;
+}
+.EXTRA-IN {
+    background-color: #fb8;
+}
+.UNPAIR-IN {
+    background-color: #6ff;
+}
+.entry-confirmation-link {
+    text-decoration: none;
+}
+.confirm-entry {
+    border: 4px solid #444;
+    border-radius: 12px;
+    background-color: cyan;
+    font-size: 500%;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 10px;
+    display: block;
+    text-align: center;
+    margin: 15px;
+    padding-top: 100px;
+    padding-bottom: 100px;
+}
+.skip-entry {
+    border: 4px solid #444;
+    border-radius: 12px;
+    background-color: cyan;
+    font-size: 250%;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 10px;
+    margin: 15px;
+    display: block;
+    text-align: center;
+}
+.confirmation-finish {
+    font-size: 2.2em;
+    text-align: center;
+    color: white;
+}
+
+.confirm-submit {
+    background-color: red;
+    padding: 5px;
+    margin: 2px;
+}
+.confirm-cancel {
+    padding: 5px;
+    margin: 2px;
+    background-color: cyan;
+}
+.qi_uuid {
+    font-family: "Lucida Console", Monaco, monospace;
+}
+.delete-completed {
+    background-color: #6f6;
+    padding: 10px;
+    margin: 10px;
+}
+.delete-cancelled {
+    background-color: cyan;
+    padding: 10px;
+    margin: 10px;
+}
+.delete-button {
+    background-color: #f66;
+}
+.edit-button {
+    background-color: #6f6;
+}
+.regen-button {
+    background-color: #6ff;
+}
+.generic-display-table {
+    border: 2px solid #aaa;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px;
+    display: inline-block;
+    background-color: #eee;
+}
+
+
+/* This is all nav stuff */
+ul.nav {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+}
+
+li.nav {
+  float: left;
+}
+
+li.nav a, .dropbtn {
+  display: inline-block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+li.nav a:hover, .dropdown:hover .dropbtn {
+  background-color: red;
+}
+
+li.dropdown {
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+
+.dropdown-content a:hover {background-color: #f1f1f1;}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
