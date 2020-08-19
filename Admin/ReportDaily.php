@@ -3,15 +3,11 @@
     defineRelPath(__DIR__);
 
     $hd = new traqrDoc("Report/Analyze Data");
-    $hd->css(CSSFILE);
-
-    $ce = new covidqrEntryNew(getDSN());
-
     if (isset($_GET['Mode']) && $_GET['Mode'] == 'email') $hd->setOption('embed-styles',TRUE);
-
     $hd->htmlBeg();
 
     if ( authorized() ){
+        $ce = new covidqrEntryNew(getDSN());
         print '<section>' . NL;
         print $ce->analyzeDataByDay();
         print '</section>' . NL;

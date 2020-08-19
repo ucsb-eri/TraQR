@@ -4,7 +4,7 @@
 
     $cmgr = new covidQRMgr(MAX_BUILDING_ROOM_COMBOS);
     $hd = new traqrDoc("Generate QR Codes");
-    $hd->css(CSSFILE);
+    //$hd->css(CSSFILE);
     $hd->htmlBeg();
 
     print '<section>' . NL;

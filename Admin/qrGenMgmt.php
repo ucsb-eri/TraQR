@@ -3,8 +3,6 @@
     defineRelPath(__DIR__);
 
     $hd = new traqrDoc("QR Management");
-    $hd->css(CSSFILE);
-
     $hd->htmlBeg();
 
     if ( authorized() ){

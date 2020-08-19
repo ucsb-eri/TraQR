@@ -3,7 +3,7 @@
     defineRelPath(__DIR__);
 
     $hd = new traqrDoc("Identifier Management");
-    $hd->css(CSSFILE);
+    //$hd->css(CSSFILE);
 
     $hd->htmlBeg();
 

@@ -16,3 +16,14 @@ The primary benefits of this system in its early stages are:
 * Flexibility:
   * Basically just a web request, so users could also be provided the URL (via text or other communication channels) for storage in other locations.
   * Contractors could be sent a text to click once the arrived on location, do the same when leaving
+
+
+# Installation/Configuration
+You will need sudo privs or access to root account for a few items upfront after cloning the repo.
+First order of business is to make sure that the webserver is able to write to a limited set of locations.
+
+From command line:
+   ```
+   cd run
+   make perms     # the Makefile uses apache:apache as the webserver perms
+   ```

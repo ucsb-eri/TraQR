@@ -6,6 +6,8 @@ require_once(__DIR__ . '/htmlDoc.inc.php');
 class traqrDoc extends htmlDoc {
      function __construct($title){
          parent::__construct($title);
+         $this->css('css/traqr.css');
+         $this->css('css/nav.css');
      }
      function navHTML(){
          $b = '';

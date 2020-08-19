@@ -3,13 +3,11 @@
     defineRelPath(__DIR__);
 
     $hd = new traqrDoc("QR Collection Data Display (SR)");
-    $hd->css(CSSFILE);
-
-    $ce = new covidqrEntryNew(getDSN());
-
     $hd->htmlBeg();
 
+
     if ( authorized() ){
+        $ce = new covidqrEntryNew(getDSN());
         print '<section>' . NL;
         print $ce->reportAll();
         print '</section>' . NL;

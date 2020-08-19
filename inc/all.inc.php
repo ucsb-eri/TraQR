@@ -6,7 +6,7 @@ define('NL',"\n");
 define('MAX_BUILDING_ROOM_COMBOS',7);
 // trying to make this work for both PHP and HTML access, but that is challanging
 // as soon as htmlDoc code at runtime from a subdir, things break.
-define('CSSFILE','css/covidqr.css');
+//define('CSSFILE','css/traqr.css');
 
 function defineRelPath($dir){
     foreach(array('./','../','../../','../../../') as $rel){
@@ -21,7 +21,7 @@ function defineRelPath($dir){
     }
 }
 // DB needs to be used in conjuntion with REL
-define('DB','/var/dbs/covidqr.sqlite3');
+define('DB','/var/dbs/traqr.sqlite3');
 define('BASEURL',$_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME']);
 
 function getDSN(){
@@ -34,7 +34,7 @@ require_once(__DIR__ . '/auth.inc.php');
 require_once(__DIR__ . '/pdo.inc.php');
 require_once(__DIR__ . '/pdo-extended.inc.php');
 require_once(__DIR__ . '/traqrDoc.inc.php');
-require_once(__DIR__ . '/covidqr-lib.inc.php');
+require_once(__DIR__ . '/traqr-lib.inc.php');
 
 // gonna allow this to be done in covidqr-lib.inc.php because that is what depends on it
 //require_once(__DIR__ . '/../ext/phpqrcode/qrlib.php');

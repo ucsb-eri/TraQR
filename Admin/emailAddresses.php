@@ -3,8 +3,6 @@
     defineRelPath(__DIR__);
 
     $hd = new traqrDoc("Email Addresses Page");
-    $hd->css(CSSFILE);
-
     $hd->htmlBeg();
 
     if ( authorized() ){
