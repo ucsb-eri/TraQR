@@ -7,7 +7,7 @@
 
     if ( authorized() ){
         $b = '';
-        $ce = new covidqrEntryNew('sqlite:' . REL . '/' . DB);
+        $ce = new traQRpdo('sqlite:' . REL . '/' . DB);
         $b .= $ce->generateEmailAddresses();
         print $b;
     }

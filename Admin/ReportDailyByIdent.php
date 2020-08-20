@@ -7,7 +7,7 @@
     $hd->htmlBeg();
 
     if ( authorized() ){
-        $ce = new covidqrEntryNew(getDSN());
+        $ce = new traQRpdo(getDSN());
         print '<section>' . NL;
         print $ce->analyzeData();
         print '</section>' . NL;

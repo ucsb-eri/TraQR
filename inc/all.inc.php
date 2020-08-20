@@ -36,7 +36,7 @@ require_once(__DIR__ . '/pdo-extended.inc.php');
 require_once(__DIR__ . '/traqrDoc.inc.php');
 require_once(__DIR__ . '/traqr-lib.inc.php');
 
-// gonna allow this to be done in covidqr-lib.inc.php because that is what depends on it
+// gonna allow this to be done in traqr-lib.inc.php because that is what depends on it
 //require_once(__DIR__ . '/../ext/phpqrcode/qrlib.php');
 
 ?>

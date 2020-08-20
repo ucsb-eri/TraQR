@@ -6,7 +6,7 @@
     $hd->htmlBeg();
 
     if ( authorized() ){
-        $ce = new covidqrEntryNew(getDSN());
+        $ce = new traQRpdo(getDSN());
         print '<section>' . NL;
         print $ce->mergeRecords('87','78');
         print '</section>' . NL;

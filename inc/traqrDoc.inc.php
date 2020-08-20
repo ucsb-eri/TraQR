@@ -1,5 +1,6 @@
 <?php
 require_once(__DIR__ . '/htmlDoc.inc.php');
+////////////////////////////////////////////////////////////////////////////////
 class menuItem {
     function __construct($liclass,$aclass,$label,$link = 'javascript:void(0)'){
         $this->liclass = $liclass;
@@ -24,6 +25,7 @@ class menuItem {
         return $b;
     }
 }
+////////////////////////////////////////////////////////////////////////////////
 class menu {
     function __construct($liclass,$aclass){
         $this->liclass = $liclass;
@@ -78,6 +80,10 @@ class traqrDoc extends htmlDoc {
          $b .= "<hr>\n";
          return $b;
      }
+     ///////////////////////////////////////////////////////////////////////////
+     // This was a test of the dropdown menu stuff snagged online before implementing
+     // my menu class above.  Kinda junk, but will do for the time being.
+     ///////////////////////////////////////////////////////////////////////////
      function whatevs(){
          $b = '  <ul class="nav">
    <li class="dropdown nav">

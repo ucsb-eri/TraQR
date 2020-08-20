@@ -4,7 +4,7 @@ require_once(__DIR__ . '/utils.inc.php');
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-class covidQRMgr {
+class traQRMgr {
     function __construct($numRooms){
         $this->buildingEntries = range(1,$numRooms);
         // this data is for if we are sending post data from another page to regenerate
@@ -105,7 +105,7 @@ class covidQRMgr {
             $bldg = "Building".$num;
             $room = "Room".$num;
             if ( isset($GLOBALS[$bldg]) && isset($GLOBALS[$room]) && $GLOBALS[$bldg] != "" && $GLOBALS[$room] != "" ){
-                $this->cqgen[] = new covidqr('cqr'.$num,$GLOBALS['Identifier'],$GLOBALS[$bldg],$GLOBALS[$room]);
+                $this->cqgen[] = new traQRcode('cqr'.$num,$GLOBALS['Identifier'],$GLOBALS[$bldg],$GLOBALS[$room]);
             }
         }
         foreach($this->cqgen as $c){
@@ -116,7 +116,7 @@ class covidQRMgr {
 }
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-class covidqr {
+class traQRcode {
     public $baseurl = BASEURL;
     public $modes = array('BIDIR');
 
@@ -150,7 +150,7 @@ class covidqr {
         // eventually we should be able to remove Mode from the QR code itself
         // hoping to ultimately have JUST the uuid field.
         foreach( $this->modes as $mode ){
-            $ce = new covidqrEntryNew(getDSN());
+            $ce = new traQRpdo(getDSN());
             $ce->q("INSERT OR REPLACE INTO qrInfo (qi_ident,qi_building,qi_room,qi_uuid) VALUES (?,?,?,?)",array($this->data['Identifier'],$this->data['Building'],$this->data['Room'],$this->data['UUID']));
             $ce->q("INSERT OR REPLACE INTO idInfo (id_ident) VALUES (?)",array($this->data['Identifier']));
 
@@ -183,24 +183,14 @@ class covidqr {
             $b .= '  <div class="qr-container"><!-- begin container for single QR (either ingress or egress) -->' . NL;
             $b .= '      <img class="qr-image" src="' . $this->qrfiles[$mode] . '" alt="QR code" />' . NL;
             $b .= '      <div class="qr-info">' . NL;
-//            $b .= '      ## ' . $mode . ' ##<br>' . NL;
-//            $b .= '      ' . '  ' . $this->data['Identifier'] . '<br>' . NL;
             $b .= '      ' . '  ' . $netid . '<br>' . NL;
             $b .= '      ' . $this->data['Building'] . '&nbsp;&nbsp;'  . $this->data['Room'] .'<br>' . NL;
             $b .= '      <a href="' . $this->urls[$mode] . '">HTML Link</a>' . '<br>' . NL;
-//            $b .= '      <a href="' . $this->alturls1[$mode] . '">HTML Link (Alt1)</a>' . '<br>' . NL;
-//            $b .= '      <a href="' . $this->alturls2[$mode] . '">HTML Link (Alt2)</a>' . '<br>' . NL;
-//            $b .= '      <a href="' . $this->qrurls[$mode] . '">QR Link</a>' . '<br>' . NL;
             $b .= '      </div>' . NL;
             $b .= '  </div><!-- end container for single QR (either ingress or egress) -->' . NL;
-
-            // make a db entry on the fly here to populate the qrInfo table.
         }
         $b .= '</div><!-- end container for QR set -->' . NL;
         return $b;
     }
 }
-////////////////////////////////////////////////////////////////////////////////
-
-
 ?>

@@ -1,7 +1,7 @@
 <?php
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-class covidqrEntryNew extends pdoCore {
+class traQRpdo extends pdoCore {
     function __construct($dsn){
         parent::__construct($dsn);
         //print "Done with constructor<br>\n";
@@ -36,7 +36,7 @@ class covidqrEntryNew extends pdoCore {
         if ( TRUE ) {
             $q = "DROP TABLE IF EXISTS";
         }
-        //print "covidqrEntryNew::initDB();<br>\n";
+        //print "traQRpdo::initDB();<br>\n";
         $this->tablename = 'scanData';
         $q = "CREATE TABLE IF NOT EXISTS properties (
             rowid       INTEGER PRIMARY KEY,

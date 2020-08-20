@@ -7,7 +7,7 @@
 
     if ( authorized() ){
         $b = '';
-        $ce = new covidqrEntryNew(getDSN());
+        $ce = new traQRpdo(getDSN());
         $b .= $ce->displayQrInfo();
 
         $b .= "<br><h3>General Info, Controls and Descriptions</h3>
