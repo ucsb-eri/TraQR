@@ -27,7 +27,7 @@
         $b .= "<li>" . $hd->relUrl('Admin/emailAddresses.php','generate email addresses from data') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('ClearTestEntries.php','Clear Entries for *@test.ucsb.edu') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Admin/Login.php','Login to appropriate realm for this site') . "</li>\n";
-        $b .= "<li>" . $hd->relUrl('Admin/Logout.php','Logout') . "</li>\n";
+//        $b .= "<li>" . $hd->relUrl('Admin/Logout.php','Logout') . "</li>\n";
         $b .= "</ul>\n";
 
 
