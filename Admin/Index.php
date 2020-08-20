@@ -2,7 +2,7 @@
     require_once(__DIR__ . '/../inc/all.inc.php');
     defineRelPath(__DIR__);
 
-    $hd = new traqrDoc("Utils Page");
+    $hd = new traqrDoc("Admin Index");
     //$hd->css(CSSFILE);
 
     $hd->htmlBeg();

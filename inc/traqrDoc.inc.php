@@ -1,6 +1,50 @@
 <?php
 require_once(__DIR__ . '/htmlDoc.inc.php');
-
+class menuItem {
+    function __construct($liclass,$aclass,$label,$link = 'javascript:void(0)'){
+        $this->liclass = $liclass;
+        $this->aclass = $aclass;
+        $this->label = $label;
+        $this->link = $link;
+        $this->menuSubItems = array();
+    }
+    function addSubItem($label,$link = '#'){
+        $this->menuSubItems[] = "<a class=\"{$this->aclass}\" href=\"$link\">$label</a><br>\n";
+    }
+    function html(){
+        $b = '';
+        $b .= '<li class="dropdown nav">' . "\n";
+        $b .= "<a class=\"dropbtn $this->aclass\" href=\"$this->link\">$this->label</a>\n";
+        $b .= "<div class=\"dropdown-content\">\n";
+        foreach($this->menuSubItems as $msi){
+            $b .= $msi;
+        }
+        $b .= "</div>\n";
+        $b .= "</li>\n";
+        return $b;
+    }
+}
+class menu {
+    function __construct($liclass,$aclass){
+        $this->liclass = $liclass;
+        $this->aclass = $aclass;
+        $this->menuItems = array();
+    }
+    function addItem($key,$label,$link = 'javascript:void(0)'){
+        $this->menuItems[$key] = new menuItem($this->liclass,$this->aclass,$label,$link);
+    }
+    function addSubItem($key,$label,$link = 'javascript:void(0)'){
+        $this->menuItems[$key]->addSubItem($label,$link);
+    }
+    function html(){
+        $b = '<li class="dropdown nav">';
+        foreach($this->menuItems as $mi){
+            $b .= $mi->html();
+        }
+        $b .= ' </li>';
+        return $b;
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 class traqrDoc extends htmlDoc {
@@ -9,38 +53,57 @@ class traqrDoc extends htmlDoc {
          $this->css('css/traqr.css');
          $this->css('css/nav.css');
      }
+     function menu(){
+         $m = new menu('nav','navlink');
+         $m->addItem('index','Home','/Index.php');
+         $m->addSubItem('index','About','/About/Index.php');
+         if ( authorized()){
+             $m->addItem('admin','Admin','/Admin/Index.php');
+             $m->addSubItem('admin','Report All','/Admin/ReportAll.php');
+             $m->addSubItem('admin','Report Daily','/Admin/ReportDaily.php');
+             $m->addSubItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');
+
+             $m->addItem('util','Util/Dev/Tools','/util/Index.php');
+             $m->addSubItem('util','PHPInfo','/util/phpinfo.php');
+             $m->addSubItem('util','DB SChema','/util/dbSchema.php');
+         }
+         return "<nav>\n" . $m->html() . "</nav>\n";
+     }
      function navHTML(){
          $b = '';
          $b .= "<header>\n";
          if ( $this->heading != '') $b .= "<h1>$this->heading</h1>\n";
          $b .= "</header>\n";
-         $b .= "<nav>\n";
-         $b .= $this->navItem('Index.php','Home');
-         $b .= $this->navItem('Admin/GenQR.php','QR Gen');
-         if ( authorized()){
-             $b .= $this->navItem('Admin/ReportAll.php','All Data');
-             $b .= $this->navItem('Admin/ReportDaily.php','Daily Data');
-             $b .= $this->navItem('Admin/ReportDailyByIdent.php','Daily Data (byIdent)');
-             $b .= $this->navItem('util/Index.php','Util/Dev/Tools');
-             $b .= $this->navItem('Admin/Index.php','Admin');
-         }
-         $b .= "</nav>\n";
+         $b .= $this->menu();
          $b .= "<hr>\n";
          return $b;
      }
      function whatevs(){
-         $b = '<ul>
-   <li class="nav"><a href="#home">Home</a></li>
-   <liclass="nav"><a href="#news">News</a></li>
+         $b = '  <ul class="nav">
    <li class="dropdown nav">
-     <a href="javascript:void(0)" class="dropbtn">Dropdown</a>
+     <a class="navlink" href="/Index.php" class="dropbtn">Home</a>
      <div class="dropdown-content">
-       <a href="#">Link 1</a>
-       <a href="#">Link 2</a>
-       <a href="#">Link 3</a>
+       <a class="navlink" href="#">About</a><br>
+     </div>
+   </li>
+   <li class="dropdown nav">
+     <a class="navlink" href="javascript:void(0)" class="dropbtn">Util/Dev/Tools</a>
+     <div class="dropdown-content">
+       <a class="navlink" href="#">PHPinfo</a><br>
+       <a class="navlink" href="#">DB Schema</a><br>
+       <a class="navlink" href="#">Report All</a><br>
+     </div>
+   </li>
+   <li class="dropdown nav">
+     <a class="navlink" href="javascript:void(0)" class="dropbtn">Admin</a>
+     <div class="dropdown-content">
+       <a class="navlink" href="#">Report Daily</a><br>
+       <a class="navlink" href="#">Report Daily (by ident)</a><br>
+       <a class="navlink" href="#">Report All</a><br>
      </div>
    </li>
  </ul>';
+         return $b;
 
      }
      function contentIndex(){

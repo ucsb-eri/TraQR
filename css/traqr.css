@@ -5,13 +5,12 @@ body {
     font-family: arial, helvetica, sans-serif;
 }
 header {
-    background-color: #ffc;
+    background-color: #00a;
     display: inline-block;
     padding: 0px;
     margin: 0px;
 }
 nav {
-    background-color: #ffc;
     display: inline-block;
     padding-left: 0px;
     padding-right: 0px;
@@ -26,16 +25,17 @@ a.nav {
     // border: 1px solid gray;
 }
 header h1 {
-    font-size: 80%;
+    font-size: 100%;
     text-align: center;
     padding-left: 20px;
     padding-right: 20px;
-    margin-top: 2px;
-    margin-bottom: 2px;
+    margin-top: 3px;
+    margin-bottom: 3px;
+    color: white;
 }
 h2 {
     font-size: 120%;
-    text-align: center;
+    text-align: left;
 }
 h3 {
     font-size: 100%;

@@ -2,7 +2,7 @@
     require_once(__DIR__ . '/../inc/all.inc.php');
     defineRelPath(__DIR__);
 
-    $hd = new traqrDoc("QR Collection Data Display (SR)");
+    $hd = new traqrDoc("Report All Data");
     $hd->htmlBeg();
 
 
