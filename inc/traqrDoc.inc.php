@@ -65,9 +65,9 @@ class traqrDoc extends htmlDoc {
              $m->addSubItem('admin','Report Daily','/Admin/ReportDaily.php');
              $m->addSubItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');
 
-             $m->addItem('util','Util/Dev/Tools','/util/Index.php');
-             $m->addSubItem('util','PHPInfo','/util/phpinfo.php');
-             $m->addSubItem('util','DB SChema','/util/dbSchema.php');
+             $m->addItem('util','Utils/Dev/Tools','/Util/Index.php');
+             $m->addSubItem('util','PHPInfo','/Util/phpinfo.php');
+             $m->addSubItem('util','DB SChema','/Util/dbSchema.php');
          }
          return "<nav>\n" . $m->html() . "</nav>\n";
      }

@@ -1,0 +1,10 @@
+<?php
+// Config currently is just straight PHP and is really only used for my stupid Auth which
+// will likely be abaondoned soon anyway.
+
+// this is for the simple, stupid auth I am doing
+$GLOBALS['authorizedIPs'] = array(
+    '127.0.0.1',         // localhost (for cron jobs run on host)
+    '128.111.100.88',    // spin      (for cron jobs run on host)
+);
+?>

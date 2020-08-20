@@ -112,7 +112,7 @@ class traQRpdo extends pdoCore {
             // while this looks at eepoch field, we are setting valid field to FALSE if it fails the check
             $diff = ($this->data[$f] - filter_input(INPUT_GET,$f,FILTER_VALIDATE_INT));
             // If set we want to compare to whats in the data from this load (which should be more recent...)
-            if ( $diff < 0 || $diff > $GLOBALS['InvalidateConfirmSeconds']) $this->data['valid'] = FALSE;
+            if ( $diff < 0 || $diff > INVALIDATE_CONFIRM_SECONDS ) $this->data['valid'] = FALSE;
         }
 
         $f = 'Mode';

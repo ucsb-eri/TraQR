@@ -33,8 +33,8 @@
 
         $b .= "<p>This section houses a collection of mainly dev utils, some of which may be in dev themselves</p>\n";
         $b .= "<ul>\n";
-        $b .= "<li>" . $hd->relUrl('util/phpinfo.php','PHP Info') . "</li>\n";
-        $b .= "<li>" . $hd->relUrl('util/dbSchema.php','DB Schema') . "</li>\n";
+        $b .= "<li>" . $hd->relUrl('Util/phpinfo.php','PHP Info') . "</li>\n";
+        $b .= "<li>" . $hd->relUrl('Util/dbSchema.php','DB Schema') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Enter.php','Entry Script (for Testing)') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('About/Index.php','About Page') . "</li>\n";
         $b .= "</ul>\n";
