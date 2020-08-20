@@ -410,7 +410,7 @@ class traQRpdo extends pdoCore {
         &nbsp;&nbsp;Maintain Social Distance when possible<br>
         &nbsp;&nbsp;Wear a mask when unable to Social Distance<br>
         </p>
-        <img src=\"./media/mask_sick_take_care_of_your_health_flu_health_emoji_expression_face_emoticon_fever_ill_influenza_lifestyle_treatment_sneeze_epidemic_cold_temperature-512.png\"><br>
+        <img src=\"./media/traQR-safety.png\"><br>
         <a href=\"./\">Exit to Main page</a><br>
         ";
         print $b;
