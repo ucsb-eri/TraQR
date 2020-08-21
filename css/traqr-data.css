@@ -1,0 +1,41 @@
+/*
+The styles here are specific to the db data, typically coloring or alignment only
+*/
+.qr_ident {
+    text-align: right;
+    width: 200px;
+}
+.sd_tatus {
+    text-align: center;
+    width: 125px;
+}
+.sd_stay {
+    text-align: right;
+}
+.sd_hrstay {
+    text-align: right;
+}
+.Building {
+    text-align: center;
+}
+
+/* Status Column coloring */
+.UNPAIR-OUT {
+    background-color: #f66;
+}
+.PAIRED {
+    background-color: #6f6;
+}
+.TESTING {
+    background-color: #a8f;
+}
+.EXTRA-IN {
+    background-color: #fb8;
+}
+.UNPAIR-IN {
+    background-color: #6ff;
+}
+
+td.qr_uuid, td.sd_uuid {
+    font-family: "Lucida Console", Monaco, monospace;
+}
