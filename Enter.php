@@ -7,7 +7,7 @@
     $hd->htmlBeg();
 
     $ce2 = new traQRpdo(getDSN());
-    $ce2->dataToDb();
+    $ce2->submitDataForProcessing();
 
     $hd->htmlEnd();
 ?>

@@ -7,7 +7,7 @@
 
     if ( authorized() ){
         $b = '';
-        $ce = new traQRpdo('sqlite:' . REL . '/' . DB);
+        $ce = new traQRpdo(getDSN());
         $b .= $ce->generateEmailAddresses();
         print $b;
     }

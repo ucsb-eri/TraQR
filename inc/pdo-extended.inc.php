@@ -11,25 +11,25 @@ class traQRpdo extends pdoCore {
 
         // $this->qrScanFields = $this->qrDbFields;
         // $this->qrScanFields[] = 'Variant';
-        // $this->qrScanFields[] = 'Stage';
-        //array('Mode','Identifier','Building','Room','Variant','Stage');
+        // $this->qrScanFields[] = 'sd_stage';
+        //array('Mode','Identifier','Building','Room','Variant','sd_stage');
     }
     ////////////////////////////////////////////////////////////////////////////
     function generateEmailAddresses(){
-        $list = $this->fetchListNew("SELECT DISTINCT(Identifier) FROM scanData WHERE Identifier != '' AND Identifier like '%@%ucsb.edu%';");
+        $list = $this->fetchListNew("SELECT DISTINCT(qr_ident) FROM viewAll WHERE qr_ident != '' AND qr_ident like '%@%ucsb.edu%';");
         print_pre($list,"rowinfo");
         print implode(", ",$list);
     }
     ////////////////////////////////////////////////////////////////////////////
     function initData(){
-        $this->data['epoch'] = time();  // not sure we will even need this
-        $this->data['ds'] = date('Y-m-d');
-        $this->data['its'] = date('Ymd-His');
-        $this->data['iepoch'] = date('U');
-        $this->data['ets'] = date('Ymd-His');
-        $this->data['eepoch'] = date('U');
-        $this->data['valid'] = TRUE;
-        $this->data['ip'] = $_SERVER['REMOTE_ADDR'];
+        $this->data['sd_epoch'] = time();  // not sure we will even need this
+        $this->data['sd_ds'] = date('Y-m-d');
+        $this->data['sd_its'] = date('Ymd-His');
+        $this->data['sd_iepoch'] = date('U');
+        $this->data['sd_ets'] = date('Ymd-His');
+        $this->data['sd_eepoch'] = date('U');
+        $this->data['sd_valid'] = TRUE;
+        $this->data['sd_ip'] = $_SERVER['REMOTE_ADDR'];
     }
     ////////////////////////////////////////////////////////////////////////////
     function initDB(){
@@ -39,62 +39,89 @@ class traQRpdo extends pdoCore {
         //print "traQRpdo::initDB();<br>\n";
         $this->tablename = 'scanData';
         $q = "CREATE TABLE IF NOT EXISTS properties (
-            rowid       INTEGER PRIMARY KEY,
-            key         TEXT,
-            val         TEXT,
-            UNIQUE(key) ON CONFLICT REPLACE
+        rowid       INTEGER PRIMARY KEY,
+        key         TEXT,
+        val         TEXT,
+        UNIQUE(key) ON CONFLICT REPLACE
         )";
 
         $q = "CREATE TABLE IF NOT EXISTS scanData (
-            sd_id       INTEGER PRIMARY KEY,  -- alias for rowid
-            sd_uuid     TEXT,                 -- MD5 encoding of Identifier, Building and Room
-            Mode        TEXT,                 -- INGRESS or EGRESS
-            Status      TEXT,                 -- Various Status strings
-            Identifier  TEXT,                 -- Identifier of person that scanned QR code
-            Building    TEXT,                 -- Building
-            Room        TEXT,                 -- Room # in Building
-            ds          TEXT,                 -- Datestamp YYYY-MM-DD
-            aCMZ        TEXT,                 -- Air handling contamination management zone (CMZ)
-            pCMZ        TEXT,                 -- Physical contamination management zone (CMZ)
-            its         TEXT DEFAULT '',      -- INGRESS timestamp
-            iepoch      TIMESTAMP DEFAULT (strftime('%s','now')),  -- INGRESS epoch (ctime) value
-            ets         TEXT DEFAULT '',      -- EGRESS timestamp
-            eepoch      TIMESTAMP DEFAULT (strftime('%s','now')),  -- EGRESS epoch (ctime) value
-            stay        INTEGER,              -- seconds of how long the users stay was
-            hrstay      TEXT,                 -- human readable form for length of stay HH:MM?  H.DDDD
-            flags       TEXT,                 -- Flags - Not sure how I want to use this yet, extra field for now
-            extra       TEXT,                 -- extra unused field reclaimed from previous schema
-            ip          TEXT                  -- IP submission came from
+        sd_id       INTEGER PRIMARY KEY,                         -- alias for rowid
+        sd_uuid     TEXT,                                        -- MD5 encoding of Identifier, Building and Room
+        sd_mode     TEXT,                                        -- INGRESS or EGRESS - this may be redundant soon
+        sd_status   TEXT,                                        -- Various Status strings
+        -- Identifier  TEXT,                                        -- Identifier of person that scanned QR code
+        -- Building    TEXT,                                        -- Building
+        -- Room        TEXT,                                        -- Room # in Building
+        sd_ds       TEXT,                                        -- Datestamp YYYY-MM-DD
+        -- aCMZ        TEXT,                                        -- Air handling contamination management zone (CMZ)
+        -- pCMZ        TEXT,                                        -- Physical contamination management zone (CMZ)
+        sd_its      TEXT DEFAULT '',                             -- INGRESS timestamp
+        sd_iepoch   TIMESTAMP DEFAULT (strftime('%s','now')),    -- INGRESS epoch (ctime) value
+        sd_ets      TEXT DEFAULT '',                             -- EGRESS timestamp
+        sd_eepoch   TIMESTAMP DEFAULT (strftime('%s','now')),    -- EGRESS epoch (ctime) value
+        sd_stay     INTEGER,                                     -- seconds of how long the users stay was
+        sd_hrstay   TEXT,                                        -- human readable form for length of stay HH:MM?  H.DDDD
+        sd_flags    TEXT,                                        -- Flags - Not sure how I want to use this yet, extra field for now
+        sd_extra    TEXT,                                        -- extra unused field reclaimed from previous schema
+        sd_ip       TEXT                                         -- IP submission came from
         );";
         $this->exec($q);
 
         // This is to record
         $q = "CREATE TABLE IF NOT EXISTS qrInfo (
-            qi_id         INTEGER PRIMARY KEY,                       -- alias for rowid
-            qi_ident      TEXT,                                      -- identifier
-            qi_building   TEXT,                                      -- Building
-            qi_room       TEXT,                                      -- Room # in Building
-            qi_uuid       TEXT,                                      -- UUID for ident/building/room
-            qi_epoch      TIMESTAMP DEFAULT (strftime('%s','now')),  -- date this entry was made
-            qi_extra      TEXT,                                      -- extra field for possible use later
-            UNIQUE(qi_ident,qi_building,qi_room) ON CONFLICT REPLACE
+        qr_id         INTEGER PRIMARY KEY,                       -- alias for rowid
+        qr_ident      TEXT,                                      -- identifier
+        qr_building   TEXT,                                      -- Building
+        qr_room       TEXT,                                      -- Room # in Building
+        qr_uuid       TEXT,                                      -- UUID for ident/building/room
+        qr_epoch      TIMESTAMP DEFAULT (strftime('%s','now')),  -- date this entry was made
+        qr_extra      TEXT,                                      -- extra field for possible use later
+        UNIQUE(qr_uuid,qr_ident,qr_building,qr_room) ON CONFLICT IGNORE
         );";
         //print_pre($q,"query: $q");
         $this->exec($q);
 
         // This is to record
         $q = "CREATE TABLE IF NOT EXISTS idInfo (
-            id_id          INTEGER PRIMARY KEY,
-            id_ident       TEXT,                                     -- identifier
-            id_name_first  TEXT,                                     -- first name
-            id_name_last   TEXT,                                     -- last name
-            id_phone       TEXT,                                     -- phone number
-            id_email       TEXT,                                     -- email address
-            id_UCSBNetID   TEXT,                                     -- ucsbnetid (if available)
-            id_extra       TEXT,                                     -- extra text field for possible user later
-            UNIQUE(id_ident) ON CONFLICT REPLACE
+        id_id          INTEGER PRIMARY KEY,
+        id_ident       TEXT,                                     -- identifier
+        id_name_first  TEXT,                                     -- first name
+        id_name_last   TEXT,                                     -- last name
+        id_phone       TEXT,                                     -- phone number
+        id_email       TEXT,                                     -- email address
+        id_UCSBNetID   TEXT,                                     -- ucsbnetid (if available)
+        id_extra       TEXT,                                     -- extra text field for possible use later
+        UNIQUE(id_ident) ON CONFLICT IGNORE
         );";
         //print_pre($q,"query: $q");
+        $this->exec($q);
+
+        // This is to record
+        $q = "CREATE TABLE IF NOT EXISTS cmzInfo (
+        cm_id          INTEGER PRIMARY KEY,
+        cm_building    TEXT,                                     -- Building
+        cm_room        TEXT,                                     -- Room
+        cm_aCMZ        TEXT,                                     -- Air Handling Contamination Management Zone
+        cm_pCMZ        TEXT,                                     -- Physical     Contamination Management Zone
+        cm_extra       TEXT,                                     -- extra text field for possible use later
+        UNIQUE(cm_building,cm_room) ON CONFLICT IGNORE
+        );";
+        //print_pre($q,"query: $q");
+        $this->exec($q);
+
+        $q = "CREATE VIEW IF NOT EXISTS viewAll AS SELECT
+              *,
+              qrInfo.*,
+              idInfo.*,
+              qr_building AS Building,
+              qr_room AS Room,
+              id_name_first AS 'First',
+              id_name_last AS Last
+        FROM scanData
+        LEFT JOIN qrInfo ON sd_uuid = qr_uuid
+        LEFT JOIN idInfo ON qr_ident = id_ident
+        ;";
         $this->exec($q);
 
         return true;
@@ -103,19 +130,19 @@ class traQRpdo extends pdoCore {
     function loadGetData(){
         // Would love to modularize these a bit and "register" their handling
         // that may be an option, the filter_inputs and preg_replace could likely be done pretty cleanly
-        // but need to figure out a way to handle the selection list entries (Mode, Variant,Stage)
+        // but need to figure out a way to handle the selection list entries (Mode, Variant,sd_stage)
         // for now, use this to build some of the lists
         //print_pre($_GET,__METHOD__ . ": GET Vars at beginning");
 
-        $f = 'eepoch';
-        if(isset($_GET['eepoch'])){
+        $f = 'sd_eepoch';
+        if(isset($_GET['sd_eepoch'])){
             // while this looks at eepoch field, we are setting valid field to FALSE if it fails the check
             $diff = ($this->data[$f] - filter_input(INPUT_GET,$f,FILTER_VALIDATE_INT));
             // If set we want to compare to whats in the data from this load (which should be more recent...)
-            if ( $diff < 0 || $diff > INVALIDATE_CONFIRM_SECONDS ) $this->data['valid'] = FALSE;
+            if ( $diff < 0 || $diff > INVALIDATE_CONFIRM_SECONDS ) $this->data['sd_valid'] = FALSE;
         }
 
-        $f = 'Mode';
+        $f = 'sd_mode';
         if( isset($_GET[$f])){
             if     ( $_GET[$f] == 'EGRESS'  ) $this->data[$f] = 'EGRESS';
             elseif ( $_GET[$f] == 'INGRESS' ) $this->data[$f] = 'INGRESS';
@@ -124,56 +151,16 @@ class traQRpdo extends pdoCore {
         $this->qrScanFields[] = $f;
         $this->qrDbFields[] = $f;
 
-        $f = 'Identifier';
-        // the conditional below is ONLY in case someone has an old UCSBNetID QR
-        // if the conditional is not used, then identifier is likely to get unset
-        $this->data[$f] = preg_replace('/[^a-zA-Z0-9_@+\. ]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING)));
+        $f = 'sd_uuid';
+        $this->data[$f] = preg_replace('/[^a-zA-Z0-9]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING)));
         $this->qrScanFields[] = $f;
         $this->qrDbFields[] = $f;
+        $this->data['qr_uuid'] = $this->data[$f];
 
-        // leave in support for UCSBNetID field for the moment
-        $f = 'UCSBNetID';
-        $this->data[$f] = preg_replace('/[^a-zA-Z0-9_@+\. ]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING)));
-        // $this->qrScanFields[] = $f;
-        //$this->qrDbFields[] = 'Identifier';
-        if( array_key_exists($f,$this->data) && $this->data[$f] != '' && $this->data['Identifier'] == '') {
-            $this->data['Identifier'] = $this->data[$f];   // aliasing this for now to catch older QR scans
-        }
-        // code and db no longer support this, so just nuke for time being.
-        unset($this->data['UCSBNetID']);
-
-        // $f = 'Identifier';
-        // // the conditional below is ONLY in case someone has an old UCSBNetID QR
-        // // if the conditional is not used, then identifier is likely to get unset
-        // if ( isset($this->data[$f])) $this->data[$f] = preg_replace('/[^a-zA-Z0-9_@+\. ]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING)));
-        // $this->qrScanFields[] = $f;
-        // $this->qrDbFields[] = $f;
-
-        $flags = FILTER_FLAG_STRIP_LOW | FILTER_FLAG_STRIP_HIGH | FILTER_FLAG_STRIP_BACKTICK;
-        $f = 'Building';
-        $this->data[$f] = preg_replace('/[^a-zA-Z0-9#+ ]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING,$flags)));
-        $this->qrScanFields[] = $f;
-        $this->qrDbFields[] = $f;
-
-        $f = 'Room';
-        $this->data[$f] = preg_replace('/[^a-zA-Z0-9#+ ]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING,$flags)));
-        $this->qrScanFields[] = $f;
-        $this->qrDbFields[] = $f;
-
-        $f = 'Variant';
+        $f = 'sd_stage';
         if( isset($_GET[$f])){
-            if     ( $_GET[$f] == 'VARIANT1'  ) $this->data[$f] = 'VARIANT1';
-            elseif ( $_GET[$f] == 'VARIANT2' )  $this->data[$f] = 'VARIANT2';
-            else                                $this->data[$f] = 'DIRECT';
-        }
-        else {
-            $this->data[$f] = 'DIRECT';
-        }
-        $this->qrScanFields[] = $f;
-
-        $f = 'Stage';
-        if( isset($_GET[$f])){
-            if     ( $_GET[$f] == 'CONFIRM'  )   $this->data[$f] = 'CONFIRM';
+            if     ( $_GET[$f] == 'REVIEW'  )    $this->data[$f] = 'REVIEW';
+            elseif ( $_GET[$f] == 'INIT' )       $this->data[$f] = 'INIT';
             elseif ( $_GET[$f] == 'DONE' )       $this->data[$f] = 'DONE';
             elseif ( $_GET[$f] == 'CONFIRMED' )  $this->data[$f] = 'DONE';
             elseif ( $_GET[$f] == 'COMPLETE' )   $this->data[$f] = 'DONE';
@@ -184,97 +171,116 @@ class traQRpdo extends pdoCore {
         $this->qrScanFields[] = $f;
 
         // this is used by ReportDay and is not used in the db or by the Entry points
-        $f = 'Date';
-        $this->data[$f] = preg_replace('/[^0-9-]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING,$flags)));
+        $f = 'sd_date';
+        $this->data[$f] = preg_replace('/[^0-9-]/','',trim(filter_input(INPUT_GET,$f,FILTER_SANITIZE_STRING)));
 
         //print_pre($this->data,__METHOD__ . ": this->data at end");
     }
     ////////////////////////////////////////////////////////////////////////////
-    function dataToDb(){
+    // This routine is called on each pass into the Enter.php script, the GET
+    // vars determine what happens from there.
+    ////////////////////////////////////////////////////////////////////////////
+    function submitDataForProcessing(){
         $this->loadGetData();
-        if(! isset($this->data['Stage'])){
-            print "Stage not set in GET<br>\n";
+
+        if(! isset($this->data['sd_stage'])){
+            print "sd_stage not set in GET<br>\n";
             print_pre($_GET,"GET data");
+            return;
         }
 
-        switch ($this->data['Stage']){
-            case 'DONE':
-                $this->dataEntryComplete();
-                return;
+        /**
+        Need to review the naming and such here to have cleaner logic...
+        **/
+        switch ($this->data['sd_stage']){
+            case 'INIT':
+                $this->dataToDbReview();
                 break;
-            case 'CONFIRM':
-                $this->dataToDbConfirmed();
-                return;
+            case 'REVIEW':
+                $this->dataToDbConfirmed();  // this actually submits data
                 break;
             default:
+                print "sd_stage value ({$this->data['sd_stage']}) Unknown<br>\n";
                 // do nothing,
                 break;
         }
-
-        if(! isset($this->data['Variant'])){
-            print "Variant not set in GET<br>\n";
-            print_pre($_GET,"GET data");
-        }
-
-        switch ($this->data['Variant']){
-            case 'DIRECT':
-                $this->dataToDbVar2();
-                // $this->dataToDbOrig();
-                break;
-            case 'VARIANT1';
-                $this->dataToDbVar1();
-                break;
-            case 'VARIANT2';
-                $this->dataToDbVar2();
-                break;
-            default:
-                print "uncaught Variant<br>\n";
-                break;
-        }
     }
     ////////////////////////////////////////////////////////////////////////////
-    function dataToDbVar1(){
-        print "Variant1 - Form with confirmation button<br>\n";
+    function uuidIsValid($uuid){
+        $founduuid = $this->fetchValNew("SELECT qr_uuid FROM qrInfo WHERE qr_uuid = ?",array($uuid));
+        return ($uuid === $founduuid);
     }
     ////////////////////////////////////////////////////////////////////////////
-    function dataToDbVar2(){
-        //print_pre($_GET,__METHOD__ . ": GET vars at beginning");
-        //print_pre($this->data,__METHOD__ . ": data vars at beginning");
+    function dataToDbReview(){
+        // print_pre($_GET,__METHOD__ . ": GET vars at beginning");
+        // print_pre($this->data,__METHOD__ . ": data vars at beginning");
 
+        $b = '';
         $dbFields = $this->qrDbFields;  // initialize our local dbFields from the object list
         $dbFields[] = 'ds';
         // In this form we will ignore INGRESS/EGRESS, just do a search for existing
         // entries and output what we think is best, confirmation that goes
-        //print "Variant2 - Form to choose ingress/egress confirmation buttons - Mode (INGRESS/EGRESS ignored)<br>\n";
-        $this->data['Mode'] = 'SCRIPT_WILL_SELECT';
+        //print "Variant2 - Form to choose ingress/egress confirmation buttons - sd_mode (INGRESS/EGRESS ignored)<br>\n";
+        $this->data['sd_mode'] = 'SCRIPT_WILL_SELECT';
 
+        // First off we want to validate that this UUID was previously entered
+        if (! $this->uuidIsValid($this->data['sd_uuid']) ){
+            print $this->scanConfirmationMessages("Invalid UUID",'invalid-entry','INVALID',array($this->data['sd_uuid']));
+            return;
+        }
+
+        // this should work since we made it past validation.
+        // could use this as validation instead though
+        $foundqr = $this->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_uuid = ?;",array($this->data['sd_uuid']));
+        //print_pre($foundqr,"searched qrInfo");
+        if (isset($foundqr[$this->data['sd_uuid']])){
+            $qrInfo = $foundqr[$this->data['sd_uuid']];
+        }
+
+        // if (! $this->uuidIsValid($this->data['sd_uuid']) ){
+        //     //print "YIKES!  Invalid UUID {$this->data['sd_uuid']}<br>\n";
+        //     $b .= "<a class=\"invalid-entry\" href=\"./EntryCompleted.php?info=INVALID\">";
+        //     $b .= "INVALID UUID<br>";
+        //     $b .= "{$this->data['sd_uuid']}<br>";
+        //     $b .= "Click anywhere on this field to EXIT<br>";
+        //     $b .= "</a>\n";
+        //     print $b;
+        //     return;
+        // }
+
+        /**
         // see if we have any existing records for Day/Identifier/Building/Room combo...
+        // This will need to change as we will need to do a join, most likely via a view
+        **/
         $whereData = array(
-            'Identifier' => $this->data['Identifier'],
-            'ds'         => $this->data['ds'],
-            'Building'   => $this->data['Building'],
-            'Room'       => $this->data['Room'],
+            'sd_uuid'     => $this->data['sd_uuid'],
+            'sd_ds'       => $this->data['sd_ds'],
+            // 'Building'   => $this->data['Building'],
+            // 'Room'       => $this->data['Room'],
         );
 
         // get rowid of the FIRST location matching entry, this allows us to update ONLY the first matching entry instead of all
         $wd = $this->generateAndedWhereClause($whereData);
-        $userLocationDateMatch = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch;",$wd['data']);
+        $userLocationDateMatch = $this->getKeyedHash('sd_id',"SELECT * FROM scanData " . $wd['qstr'] . " ORDER BY sd_iepoch;",$wd['data']);
 
+        /**
+        A lot of this logic can be simplified as we are not flagging intermediate entries anymore, we are choosing the ingress/egress automatcially
+        **/
         if( count($userLocationDateMatch) == 0){
             // this is a new INGRESS for the day
-            $this->data['Mode'] = 'INGRESS';
+            $this->data['sd_mode'] = 'INGRESS';
         }
         else{
             // get last sd_id
             foreach($userLocationDateMatch as $uldm){
                 $lastqid = $uldm['sd_id'];
             }
-            if ($userLocationDateMatch[$lastqid]['Mode'] == 'INGRESS'){
-                $this->data['Mode'] = 'EGRESS';
+            if ($userLocationDateMatch[$lastqid]['sd_mode'] == 'INGRESS'){
+                $this->data['sd_mode'] = 'EGRESS';
             }
-            elseif($userLocationDateMatch[$lastqid]['Mode'] == 'EGRESS'){
-                $this->data['Mode'] = 'INGRESS';
-                $this->data['ets'] = '';
+            elseif($userLocationDateMatch[$lastqid]['sd_mode'] == 'EGRESS'){
+                $this->data['sd_mode'] = 'INGRESS';
+                $this->data['sd_ets'] = '';
             }
             else {
                 // something went wrong
@@ -284,20 +290,27 @@ class traQRpdo extends pdoCore {
 
         // Need to build link now....
         // pass in $this->data,keys to use)
-        $this->data['Stage'] = 'CONFIRM';
+        $this->data['sd_stage'] = 'REVIEW';
         $getstr = http_build_query($this->data);
 
 
-        print "<a class=\"confirm-entry\" href=\"./Enter.php?" . $getstr . "\">";
-        print "Confirm<br>" . $this->data['Mode'] . "<br>Data";
-        print "</a>\n";
+        // Want to add some information to this button, so user can see bldg/room info
+        // at the moment, all I have is the uuid, pretty useless, but hey...
+        $b .= "<a class=\"confirm-entry\" href=\"./Enter.php?" . $getstr . "\">";
+        $b .= "Confirm " . $this->data['sd_mode'] . " Data<br>";
+        $b .= $qrInfo['qr_ident'] . "<br>\n";
+        $b .= $qrInfo['qr_building'] . "<br>\n";
+        $b .= $qrInfo['qr_room'] . "<br>\n";
+        $b .= "</a>\n";
 
 
-        print "<hr>\n";
+        $b .= "<hr>\n";
 
-        print "<a class=\"skip-entry\" href=\"./Enter.php?Stage=DONE\">";
-        print "Skip " . $this->data['Mode'] . " Confirmation";
-        print "</a>\n";
+        $b .= "<a class=\"skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
+        $b .= "Skip " . $this->data['sd_mode'] . " Confirmation";
+        $b .= "</a>\n";
+
+        print $b;
 
         //print_pre($this->data,"Confirmation data");
     }
@@ -305,56 +318,67 @@ class traQRpdo extends pdoCore {
     // With the confirm button, this is where the data is actually written out
     ////////////////////////////////////////////////////////////////////////////
     function dataToDbConfirmed(){
-        //print_pre($this->data,__METHOD__ . ": this->data at start of method");
+        // print_pre($this->data,__METHOD__ . ": this->data at start of method");
+
         $dbFields = $this->qrDbFields;  // initialize our local dbFields from the object list
-        $dbFields[] = 'ds';
+        $dbFields[] = 'sd_ds';
         // User has signed off that this data is correct, just do entry
         // $b = '';
         // $b .= "<p>User has confirmed the entry - Just need to update/insert data as appropriate</p>";
         // print $b;
 
-        if (! $this->data['valid']){
-            print $this->scanConfirmation("Too much time between scan and confirmation","problematic",$dbFields,$this->data);
+        // First off we want to validate that this UUID was previously entered
+        if (! $this->uuidIsValid($this->data['sd_uuid']) ){
+            print $this->scanConfirmationMessages("Invalid UUID",'invalid-entry','INVALID',array($this->data['sd_uuid']));
+            return;
         }
-        elseif ($this->data['Mode'] == "INGRESS" ){
-            $dbFields[] = 'its';
-            $dbFields[] = 'iepoch';
-            $dbFields[] = 'Status';
-            $dbFields[] = 'ip';
+
+        if (! $this->data['sd_valid']){
+            print $this->scanConfirmationTable("Too much time between scan and confirmation","problematic",'TIMEOUT',$dbFields,$this->data);
+            return;
+        }
+
+        if ($this->data['sd_mode'] == "INGRESS" ){
+            $dbFields[] = 'sd_its';
+            $dbFields[] = 'sd_iepoch';
+            $dbFields[] = 'sd_status';
+            $dbFields[] = 'sd_ip';
             //$dbFields[] = 'sd_uuid';
-            $this->data['Status'] = 'UNPAIR-IN';
+            $this->data['sd_status'] = 'UNPAIR-IN';
 
             $qd = $this->insertQueryData($this->tablename, $this->data,$dbFields);
             //print_pre($dbFields,"dbFields");
             //print_pre($qd['data'],"Data for query string: " . $qd['qstr']);
             $this->q($qd['qstr'],$qd['data']);
-            print $this->scanConfirmation("Successful Ingress Scan+Confirm","success",$dbFields,$this->data);
+            print $this->scanConfirmationTable("Successful Ingress Scan+Confirm","success",'DONE',$dbFields,$this->data);
         }
-        elseif($this->data['Mode'] == "EGRESS" ){
-            $dbFields[] = 'ets';
-            $dbFields[] = 'eepoch';   // replace the value already in db
-            $dbFields[] = 'Status';
-            $dbFields[] = 'stay';
+        elseif($this->data['sd_mode'] == "EGRESS" ){
+            $dbFields[] = 'sd_ets';
+            $dbFields[] = 'sd_eepoch';   // replace the value already in db
+            $dbFields[] = 'sd_status';
+            $dbFields[] = 'sd_stay';
             //$dbFields[] = 'sd_uuid';
-            $this->data['Status'] = 'PAIRED';
+            $this->data['sd_status'] = 'PAIRED';
             $whereData = array(
-                'Identifier' => $this->data['Identifier'],
-                'ds'         => $this->data['ds'],
-                'Building'   => $this->data['Building'],
-                'Room'       => $this->data['Room'],
-                'ets'        => '',
+                'sd_ds'     => $this->data['sd_ds'],
+                'sd_uuid'   => $this->data['sd_uuid'],
+                'sd_ets'    => '',
             );
 
             // get rowid of the FIRST location matching entry, this allows us to update ONLY the first matching entry instead of all
             $wd = $this->generateAndedWhereClause($whereData);
             // $singleHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch LIMIT 1;",$wd['data']);
 
-            $ingressHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch;",$wd['data']);
+            $ingressHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY sd_iepoch;",$wd['data']);
 
+            /**
+            A lot of this logic can be simplified as we are toggling between the two modes
+            Need to scope more heavily and test
+            **/
             $updatedEntries = 0;
             foreach($ingressHash as &$ih){
                 $whereData['sd_id'] = $ih['sd_id'];
-                $this->data['stay'] = $this->data['eepoch'] - $ih['iepoch'];
+                $this->data['sd_stay'] = $this->data['sd_eepoch'] - $ih['sd_iepoch'];
                 $qd = $this->updateQueryData($this->tablename, $this->data,$dbFields,$whereData);
                 $pdos = $this->q($qd['qstr'],$qd['data']);
                 $affected = $pdos->rowCount();
@@ -362,45 +386,48 @@ class traQRpdo extends pdoCore {
                 //print "update: $affected, updated Total: $updatedEntries<br>";
 
                 // So, only the first one gets the PAIRED value, all subsequent
-                $this->data['Status'] = 'EXTRA-IN';
+                $this->data['sd_status'] = 'EXTRA-IN';
             }
 
             //print "Rows Affected == $affected<br>";
             if($updatedEntries == 0){
                 // We need to remove the 'stay' entry from dbFields...
                 foreach($dbFields as $k => $v){
-                    if ($v == 'stay') break;
+                    if ($v == 'sd_stay') break;
                 }
                 unset($dbFields[$k]);
 
                 //print "No matching INGRESS record found, inserting unmatched EGRESS<br>";
-                $this->data['Status'] = "UNPAIR-OUT";
+                $this->data['sd_status'] = "UNPAIR-OUT";
                 $qd = $this->insertQueryData($this->tablename, $this->data,$dbFields);
                 //print_pre($dbFields,"dbFields");
                 //print_pre($qd['data'],"Data for query string: " . $qd['qstr']);
                 $pdos = $this->q($qd['qstr'],$qd['data']);
                 $affected = $pdos->rowCount();
 
-                print $this->scanConfirmation("Egress Entry before Ingress - Problematic ($affected)","problematic",$dbFields,$this->data);
+                print $this->scanConfirmationTable("Egress Entry before Ingress - Problematic ($affected)","problematic",'EGRESS_BEFORE_INGRESS',$dbFields,$this->data);
             }
             elseif($updatedEntries == 1) {
                 //print "SUCCESS!<br>";
-                print $this->scanConfirmation("Successful Egress Scan+Confirm","success",$dbFields,$this->data);
+                print $this->scanConfirmationTable("Successful Egress Scan+Confirm","success",'DONE',$dbFields,$this->data);
             }
             else {
                 // because of fetching the rowid of the first match above coupled with the LIMIT 1
                 // this case shouldn't be able to happen now.
-                print $this->scanConfirmation("SR Matched multiple ($updatedEntries) INGRESS entries for QR scanned data","problematic",$dbFields,$this->data);
+                print $this->scanConfirmationTable("SR Matched multiple ($updatedEntries) INGRESS entries for QR scanned data","problematic",'MULTIPLE',$dbFields,$this->data);
                 //print "More than 1 matching INGRESS record found indicating some sort of issue<br>";
             }
         }
 
-        //print "<a href=\"./Enter.php?Stage=DONE\">Click DONE with data entry</a><br>\n";
+        //print "<a href=\"./Enter.php?sd_stage=DONE\">Click DONE with data entry</a><br>\n";
 
         // print_pre($dbFields,"dbFields");
         // print_pre($this->data,"data");
     }
     ////////////////////////////////////////////////////////////////////////////
+    /**
+    This is deprecated now, feeding this to a separate, non-mobile page
+    **/
     function dataEntryComplete(){
         $b = '';
         $b .= "<p>Thanks for using the scanner!</p>
@@ -416,115 +443,20 @@ class traQRpdo extends pdoCore {
         print $b;
     }
     ////////////////////////////////////////////////////////////////////////////
-    function dataToDbOrig(){
-        $dbFields = $this->qrDbFields;  // initialize our local dbFields from the object list
-        $dbFields[] = 'ds';
-
-        $inputFailure = FALSE;
-        if (! isset($this->data['Mode']) || ! ($this->data['Mode'] == 'INGRESS' || $this->data['Mode'] == 'EGRESS'))  { $inputFailure = TRUE; $which = 'Mode'; }
-        //if (! ($this->data['Mode'] == 'INGRESS' || $this->data['Mode'] == 'EGRESS')) { $inputFailure = TRUE; $which = 'ModeType'; }
-        if (! isset($this->data['Building']) || $this->data['Building'] == ''){ $inputFailure = TRUE; $which = 'Building'; }
-        if (! isset($this->data['Room']) || $this->data['Room'] == '') {$inputFailure = TRUE; $which = 'Room'; }
-        if (! isset($this->data['Identifier']) || $this->data['Identifier'] == '') {$inputFailure = TRUE; $which = 'netid'; }
-        if ($inputFailure){
-            print $this->scanConfirmation("Entry Failed (Data Issues ($which))","failure",$dbFields,$this->data);
-            return;
-        }
-
-        $mode = $this->data['Mode'];
-        if ($mode == "INGRESS" ){
-            // Additional INGRESS data fields
-            $dbFields[] = 'its';
-            $dbFields[] = 'iepoch';
-            $dbFields[] = 'Status';
-            $this->data['Status'] = 'UNPAIR-IN';
-            $qd = $this->insertQueryData($this->tablename, $this->data,$dbFields);
-            //print_pre($dbFields,"dbFields");
-            //print_pre($qd['data'],"Data for query string: " . $qd['qstr']);
-            $this->q($qd['qstr'],$qd['data']);
-            print $this->scanConfirmation("SR Successful Ingress entry for QR scanned data","success",$dbFields,$this->data);
-        }
-        elseif($mode == "EGRESS" ){
-            // Egress entry will attempt to update a matching INGRESS record...
-            // Additional EGRESS data fields
-            $dbFields[] = 'ets';
-            $dbFields[] = 'eepoch';   // replace the value already in db
-            $dbFields[] = 'Status';
-            $dbFields[] = 'stay';
-            $this->data['Status'] = 'PAIRED';
-            $whereData = array(
-                'Identifier' => $this->data['Identifier'],
-                'ds'        => $this->data['ds'],
-                'Building'  => $this->data['Building'],
-                'Room'      => $this->data['Room'],
-                'ets'       => '',
-            );
-
-            // get rowid of the FIRST location matching entry, this allows us to update ONLY the first matching entry instead of all
-            $wd = $this->generateAndedWhereClause($whereData);
-            // $singleHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch LIMIT 1;",$wd['data']);
-
-            $ingressHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch;",$wd['data']);
-
-            $updatedEntries = 0;
-            foreach($ingressHash as &$ih){
-                $whereData['sd_id'] = $ih['sd_id'];
-                $this->data['stay'] = $this->data['eepoch'] - $ih['iepoch'];
-                $qd = $this->updateQueryData($this->tablename, $this->data,$dbFields,$whereData);
-                $pdos = $this->q($qd['qstr'],$qd['data']);
-                $affected = $pdos->rowCount();
-                $updatedEntries += $affected;
-                //print "update: $affected, updated Total: $updatedEntries<br>";
-
-                // So, only the first one gets the PAIRED value, all subsequent
-                $this->data['Status'] = 'EXTRA-IN';
-            }
-
-            //print "Rows Affected == $affected<br>";
-            if($updatedEntries == 0){
-                // We need to remove the 'stay' entry from dbFields...
-                foreach($dbFields as $k => $v){
-                    if ($v == 'stay') break;
-                }
-                unset($dbFields[$k]);
-
-                //print "No matching INGRESS record found, inserting unmatched EGRESS<br>";
-                $this->data['Status'] = "UNPAIR-OUT";
-                $qd = $this->insertQueryData($this->tablename, $this->data,$dbFields);
-                //print_pre($dbFields,"dbFields");
-                //print_pre($qd['data'],"Data for query string: " . $qd['qstr']);
-                $pdos = $this->q($qd['qstr'],$qd['data']);
-                $affected = $pdos->rowCount();
-
-                print $this->scanConfirmation("SR Egress Entry before Ingress - Problematic ($affected)","problematic",$dbFields,$this->data);
-            }
-            elseif($updatedEntries == 1) {
-                //print "SUCCESS!<br>";
-                print $this->scanConfirmation("SR Successful matched Egress entry for QR scanned data","success",$dbFields,$this->data);
-            }
-            else {
-                // because of fetching the rowid of the first match above coupled with the LIMIT 1
-                // this case shouldn't be able to happen now.
-                print $this->scanConfirmation("SR Matched multiple ($updatedEntries) INGRESS entries for QR scanned data","problematic",$dbFields,$this->data);
-                //print "More than 1 matching INGRESS record found indicating some sort of issue<br>";
-            }
-        }
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function analyzeData(){
-        $this->q("UPDATE scanData SET stay=(eepoch - iepoch) WHERE Status = 'PAIRED';");
-        $this->q("UPDATE scanData SET Status='TESTING' WHERE (Status = 'PAIRED' AND stay < 60);");
+    function reportDataByUser(){
+        $this->q("UPDATE scanData SET sd_stay=(sd_eepoch - sd_iepoch) WHERE sd_status = 'PAIRED';");
+        $this->q("UPDATE scanData SET sd_status='TESTING' WHERE (sd_status = 'PAIRED' AND sd_stay < 60);");
         //$this->q("UPDATE scanData SET hrstay=(stay/3600)||':'||((stay%3600)/60) WHERE (Status = 'PAIRED' AND stay < 60);");
         //$this->q("UPDATE scanData SET Status='TESTING' where (Status = 'TEST' AND stay < 60);");
 
         $b = '';
 
-        $dss = $this->fetchListNew("SELECT DISTINCT(ds) FROM $this->tablename ORDER BY ds DESC;");
+        $dss = $this->fetchListNew("SELECT DISTINCT(sd_ds) FROM scanData ORDER BY sd_ds DESC;");
         if ( $dss === FALSE){
             $b .= '<p>Error on query: ' . $q . '</p>' . NL ;
         }
         foreach($dss as $ds){
-            $b .= $this->analyzeDataForDS($ds);
+            $b .= $this->reportDataForDS($ds);
         }
 
         $b .="<p><strong>Legend</strong></p><br>
@@ -537,20 +469,20 @@ class traQRpdo extends pdoCore {
         return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
-    function analyzeDataByDay(){
-        $this->q("UPDATE scanData SET stay=(eepoch - iepoch) WHERE Status = 'PAIRED';");
-        $this->q("UPDATE scanData SET Status='TESTING' WHERE (Status = 'PAIRED' AND stay < 60);");
+    function reportDataByDay(){
+        $this->q("UPDATE scanData SET sd_stay=(sd_eepoch - sd_iepoch) WHERE sd_status = 'PAIRED';");
+        $this->q("UPDATE scanData SET sd_status='TESTING' WHERE (sd_status = 'PAIRED' AND sd_stay < 60);");
         //$this->q("UPDATE scanData SET hrstay=(stay/3600)||':'||((stay%3600)/60) WHERE (Status = 'PAIRED' AND stay < 60);");
         //$this->q("UPDATE scanData SET Status='TESTING' where (Status = 'TEST' AND stay < 60);");
 
         $b = '';
 
-        $dss = $this->fetchListNew("SELECT DISTINCT(ds) FROM $this->tablename ORDER BY ds DESC;");
+        $dss = $this->fetchListNew("SELECT DISTINCT sd_ds FROM scanData ORDER BY sd_ds DESC;");
         if ( $dss === FALSE){
             $b .= '<p>Error on query: ' . $q . '</p>' . NL ;
         }
         foreach($dss as $ds){
-            $b .= $this->analyzeDataByDayForDS($ds);
+            $b .= $this->reportDataByDayForDS($ds);
         }
 
         $b .="<p><strong>Legend</strong></p><br>
@@ -563,7 +495,7 @@ class traQRpdo extends pdoCore {
         return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
-    function analyzeDataByDayForDS($ds){
+    function reportDataByDayForDS($ds){
         // should maybe do a regex check on it
         if ( $ds == '' ) return '';
         //print "ds: $ds<br>\n";
@@ -574,34 +506,25 @@ class traQRpdo extends pdoCore {
         $b .= '<div class="an-data-ds-container">' . NL;
         $b .= '<h3>Report by Person for datestamp: ' . $ds . ' - ' . $hrds . $enhance . '</h3>' . NL;
 
-        $dayHash = $this->getKeyedHash('sd_id',"SELECT * FROM scanData WHERE ds = ? ORDER BY Identifier;",array($ds));
+        $dayHash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll WHERE sd_ds = ? ORDER BY id_ident;",array($ds));
         foreach($dayHash as &$h){
             $h['flags'] = '';
             $h['flags'] = '';
-            $h['.td-Status']   = '%%VALUE%%';
+            $h['.td-sd_status']   = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
-            if ($h['Status'] == 'PAIRED') $h['hrstay'] = sprintf('%d:%02d:%02d',($h['stay']/3600),(($h['stay']%3600)/60),($h['stay']%60));
-            if ($h['Status'] == 'TESTING') $h['hrstay'] = sprintf('%d:%02d:%02d',($h['stay']/3600),(($h['stay']%3600)/60),($h['stay']%60));
-
+            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = $this->seconds2hr($h['sd_stay']);
         }
-        $flds = array('sd_id','Identifier','Building','Room','Mode','Status','ds','its','iepoch','ets','eepoch','stay','hrstay','flags');
+        $flds = array('sd_id','id_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
         $b .= $this->genericDisplayTable($dayHash,$flds);
-
-
-        // $ids = $this->fetchListNew("SELECT DISTINCT(Identifier) FROM $this->tablename WHERE ds = ?;",array($ds));
-        // if ( $ids === FALSE){
-        //     $b .= '<p>Error on query: ' . $q . '</p>' . NL ;
-        // }
-        // print_r($ids,"Distinct id");
-        // foreach($ids as $id){
-        //     $b .= $this->analyzeDataForDSID($ds,$id);
-        // }
-
         $b .= '</div>' . NL;
         return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
-    function analyzeDataForDS($ds){
+    function seconds2hr($secs){
+        return sprintf('%d:%02d:%02d',($secs/3600),(($secs%3600)/60),($secs%60));
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function reportDataForDS($ds){
         // should maybe do a regex check on it
         if ( $ds == '' ) return '';
         //print "ds: $ds<br>\n";
@@ -611,13 +534,13 @@ class traQRpdo extends pdoCore {
         $b = '';
         $b .= '<div class="an-data-ds-container">' . NL;
         $b .= '<h3>Report by Person for datestamp: ' . $ds . ' - ' . $hrds . $enhance . '</h3>' . NL;
-        $ids = $this->fetchListNew("SELECT DISTINCT(Identifier) FROM $this->tablename WHERE ds = ?;",array($ds));
+        $ids = $this->fetchListNew("SELECT DISTINCT qr_ident FROM viewAll WHERE sd_ds = ?;",array($ds));
         if ( $ids === FALSE){
             $b .= '<p>Error on query: ' . $q . '</p>' . NL ;
         }
         print_r($ids,"Distinct id");
         foreach($ids as $id){
-            $b .= $this->analyzeDataForDSID($ds,$id);
+            $b .= $this->reportDataForDSID($ds,$id);
         }
 
         $b .= '</div>' . NL;
@@ -626,43 +549,23 @@ class traQRpdo extends pdoCore {
     ////////////////////////////////////////////////////////////////////////////
     // This is a check for a given day and given user
     ////////////////////////////////////////////////////////////////////////////
-    function analyzeDataForDSID($ds,$id){
+    function reportDataForDSID($ds,$id){
         $today = date('Y-m-d');
         $b = '';
         $b .= '<div class="an-data-dsid-container">' . NL;
         $b .= '<strong>' . $id . '&nbsp;' . $ds . '</strong>' . NL;
 
-        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename WHERE (ds = ? and Identifier = ?) ORDER BY iepoch;",array($ds,$id));
-
-        $prevh = array();
-        $prevh['Mode'] = '';
-        $prevh['Building'] = '';
-        $prevh['Room'] = '';
-        $len = count($hash);
-        $cntr = 0;
-        $firstpass = TRUE;
-
-        /*
-        If a given person has more rows than distinct locations (Building/Room)  Then we need to check for overlaps
-        Overlaps should be flagged in db.
-        Process will be as follows:
-        loop over ds
-          distinct user - paired only
-            check for overlaps
-              if overlap, update Status (?) - overlap is begining falls between beg and end of another entry OR ending falls between beg and end of another entry.
-        */
+        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll WHERE (sd_ds = ? and qr_ident = ?) ORDER BY sd_iepoch;",array($ds,$id));
 
         foreach($hash as &$h){
             $h['flags'] = '';
             $h['flags'] = '';
-            $h['.td-Status']   = '%%VALUE%%';
+            $h['.td-sd_tatus']   = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
-            if ($h['Status'] == 'PAIRED') $h['hrstay'] = sprintf('%d:%02d:%02d',($h['stay']/3600),(($h['stay']%3600)/60),($h['stay']%60));
-            if ($h['Status'] == 'TESTING') $h['hrstay'] = sprintf('%d:%02d:%02d',($h['stay']/3600),(($h['stay']%3600)/60),($h['stay']%60));
-            //$h['.tr'] = $h['Status'];
+            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = $this->seconds2hr($h['sd_stay']);
         }
 
-        $flds = array('sd_id','Identifier','Building','Room','Mode','Status','ds','its','iepoch','ets','eepoch','stay','hrstay','flags');
+        $flds = array('sd_id','qr_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
         $b .= $this->genericDisplayTable($hash,$flds);
 
         $b .= '</div>' . NL;
@@ -734,13 +637,11 @@ class traQRpdo extends pdoCore {
             }
             $b .= "<br>\n";
             $b .= "<input type=\"hidden\" name=\"EDIT_ROW\" value=\"$rowToEdit\"></input>";
-            //$b .= "<input type=\"hidden\" name=\"CONFIRMED\" value=\"YES\"></input>";
             $b .= "<input class=\"confirm-submit\" type=\"submit\" name=\"CONFIRMED\" value=\"Confirm Edit of row $rowToEdit\"></input>";
             $b .= "</form>";
 
             $b .= "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\">";
             $b .= "<input type=\"hidden\" name=\"EDIT_ROW\" value=\"$rowToEdit\"></input>";
-            //$b .= "<input type=\"hidden\" name=\"CONFIRMED\" value=\"YES\"></input>";
             $b .= "<input class=\"confirm-cancel\" type=\"submit\" name=\"CANCEL\" value=\"Cancel Edit of row $rowToEdit\"></input>";
             $b .= "</form>";
         }
@@ -770,12 +671,10 @@ class traQRpdo extends pdoCore {
             // This is the confirming form for the top of the page
             $b .= "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\">";
             $b .= "<input type=\"hidden\" name=\"DELETE_ROW\" value=\"$rowToDelete\"></input>";
-            //$b .= "<input type=\"hidden\" name=\"CONFIRMED\" value=\"YES\"></input>";
             $b .= "<input class=\"confirm-submit\" type=\"submit\" name=\"CONFIRMED\" value=\"Confirm Deletion of row $rowToDelete\"></input>";
             $b .= "</form>";
             $b .= "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\">";
             $b .= "<input type=\"hidden\" name=\"DELETE_ROW\" value=\"$rowToDelete\"></input>";
-            //$b .= "<input type=\"hidden\" name=\"CONFIRMED\" value=\"YES\"></input>";
             $b .= "<input class=\"confirm-cancel\" type=\"submit\" name=\"CANCEL\" value=\"Cancel Deletion of row $rowToDelete\"></input>";
             $b .= "</form>";
         }
@@ -793,14 +692,14 @@ class traQRpdo extends pdoCore {
             // building a regen form for each row is gonna be more involved than for the qrInfo.
             // here we need to run a query to get all (up to MAX_BUILDING_ROOM_COMBOS) entries for a given identifier.
 
-            $regenHash = $this->getKeyedHash('qi_uuid',"SELECT * FROM qrInfo WHERE qi_ident = ? LIMIT ?;",array($h['id_ident'],MAX_BUILDING_ROOM_COMBOS));
+            $regenHash = $this->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_ident = ? LIMIT ?;",array($h['id_ident'],MAX_BUILDING_ROOM_COMBOS));
             //print_pre($regenHash,"Regen Hash for user: ".$h['id_ident']);
             $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
             <input type=\"hidden\" name=\"Identifier\" value=\"{$h['id_ident']}\"></input>\n";
             $num = 1;
             foreach($regenHash as $rh){
-                $h['regen'] .= "<input type=\"hidden\" name=\"Building$num\" value=\"{$rh['qi_building']}\"></input>\n";
-                $h['regen'] .= "<input type=\"hidden\" name=\"Room$num\" value=\"{$rh['qi_room']}\"></input>\n";
+                $h['regen'] .= "<input type=\"hidden\" name=\"Building$num\" value=\"{$rh['qr_building']}\"></input>\n";
+                $h['regen'] .= "<input type=\"hidden\" name=\"Room$num\" value=\"{$rh['qr_room']}\"></input>\n";
                 $num++;
             }
             $h['regen'] .= "<button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
@@ -824,21 +723,21 @@ class traQRpdo extends pdoCore {
     ////////////////////////////////////////////////////////////////////////////
     function displayQrInfo(){
         $table = 'qrInfo';
-        $rowkey = 'qi_id';
+        $rowkey = 'qr_id';
         $b = '';
         $b .= $this->rowDeletion($table,$rowkey);
 
         $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
         foreach($hash as &$h){
             $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
-            //$h['delete'] = "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\"><button type=\"submit\" name=\"DELETE_ROW\" value=\"{$h['qi_id']}\">Delete</button></form>";
+            //$h['delete'] = "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\"><button type=\"submit\" name=\"DELETE_ROW\" value=\"{$h['qr_id']}\">Delete</button></form>";
             $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
-            <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qi_ident']}\"></input>
-            <input type=\"hidden\" name=\"Building1\" value=\"{$h['qi_building']}\"></input>
-            <input type=\"hidden\" name=\"Room1\" value=\"{$h['qi_room']}\"></input>
+            <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qr_ident']}\"></input>
+            <input type=\"hidden\" name=\"Building1\" value=\"{$h['qr_building']}\"></input>
+            <input type=\"hidden\" name=\"Room1\" value=\"{$h['qr_room']}\"></input>
             <button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
         }
-        $flds = array('qi_id','qi_uuid','qi_ident','qi_building','qi_room','delete','regen');
+        $flds = array('qr_id','qr_uuid','qr_ident','qr_building','qr_room','delete','regen');
         $b .= "<div class=\"generic-display-table\"><!-- begin generic-display-table -->\n";
         $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
         $b .= $this->genericDisplayTable($hash,$flds);
@@ -854,12 +753,12 @@ class traQRpdo extends pdoCore {
     // non-reproducable (unless we save the epoch of the original creation).
     // ////////////////////////////////////////////////////////////////////////////
     // function generateUUIDfromQRInfo(){
-    //     $hash = $this->getKeyedHash('qi_id',"SELECT * FROM qrInfo;");
+    //     $hash = $this->getKeyedHash('qr_id',"SELECT * FROM qrInfo;");
     //     foreach($hash as &$h){
     //         if( TRUE ){
-    //             $h['qi_uuid'] = genUUID($h['qi_ident'],$h['qi_building'],$h['qi_room']);
-    //             $q = "UPDATE qrInfo SET qi_uuid = ? WHERE qi_id = ?;";
-    //             $this->q($q,array($h['qi_uuid'],$h['qi_id']));
+    //             $h['qr_uuid'] = genUUID($h['qr_ident'],$h['qr_building'],$h['qr_room']);
+    //             $q = "UPDATE qrInfo SET qr_uuid = ? WHERE qr_id = ?;";
+    //             $this->q($q,array($h['qr_uuid'],$h['qr_id']));
     //         }
     //     }
     // }
@@ -868,11 +767,29 @@ class traQRpdo extends pdoCore {
     function reportAll(){
         $b = '';
 
-        $flds = array('sd_id','Identifier','FirstName','LastName','Building','Room','Mode','Status','ds','its','iepoch','ets','eepoch','ip','flags');
-        $hash = $this->getKeyedHash('sd_id',"SELECT *,id_name_first as FirstName,id_name_last as LastName FROM $this->tablename INNER JOIN idInfo ON Identifier = id_ident ORDER BY iepoch DESC;");
+        $flds = array('sd_id','LastName','qr_building','qr_room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_ip','sd_flags');
+
+        // Fields array here needs to align with the db fields/view
+        $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_ip','sd_flags');
+
+        // $this->q("CREATE TEMP VIEW IF NOT EXISTS viewAll AS SELECT
+        //       *,
+        //       qrInfo.*,
+        //       idInfo.*,
+        //       qr_building AS Building,
+        //       qr_room AS Room,
+        //       id_name_first AS 'First',
+        //       id_name_last AS Last
+        //     FROM scanData
+        //     LEFT JOIN qrInfo ON sd_uuid = qr_uuid
+        //     LEFT JOIN idInfo ON qr_ident = id_ident
+        //     ORDER BY sd_iepoch DESC;
+        // ");
+        //$hash = $this->getKeyedHash('sd_id',"SELECT *,qr_building as Building,qr_room as Room,id_name_first AS 'First',id_name_last AS Last FROM scanData LEFT JOIN qrInfo ON sd_uuid = qr_uuid LEFT JOIN idInfo ON qr_ident = id_ident ORDER BY sd_iepoch DESC;");
+        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll ORDER BY sd_iepoch DESC;");
         foreach($hash as &$h){
             $h['flags'] = '';
-            $h['.td-Status']   = '%%VALUE%%';
+            $h['.td-sd_status'] = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
         }
         $b .= $this->genericDisplayTable($hash,$flds);
@@ -960,12 +877,53 @@ class traQRpdo extends pdoCore {
         return $b;
     }
     function clearTestEntries(){
-        $testEntries = $this->getKeyedHash('sd_id',"SELECT * FROM scanData WHERE Identifier like '%@test.ucsb.edu';");
+        $testEntries = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll WHERE qr_ident like '%@test.ucsb.edu';");
         $testEntriesCount = count($testEntries);
-        $this->q("DELETE FROM scanData WHERE Identifier like '%@test.ucsb.edu';");
-        print_pre($testEntries,"Deleted ($testEntriesCount) Test Entries as follows:");
+        foreach($testEntries as $te){
+            $this->q("DELETE FROM scanData WHERE sd_id = ?;",array($te['sd_id']));
+            print "Deleted rowid {$te['sd_id']}<br>\n";
+        }
+    }
+    function scanConfirmationTable($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$dbFields = array(),$data = array()){
+        $b = '';
+        $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=DONE\">";
+        $b .= "<div class=\"entry-confirmation $confirmationClass\">\n";
+        $b .= "<strong class=\"confirmation\">$confirmationMessage:</strong><br>\n";
+        $b .= "<table class=\"confirmation\">\n";
+        foreach( $dbFields as $f){
+            if( $f == 'ip' ) continue;
+            if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
+        }
+        $b .= "</table>\n";
+        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Finish</strong></p>\n";
+        $b .= "</div>\n";
+        $b .= "</a>\n";
+        //print_pre($data,"scanConfirmationData");
+        return $b;
+    }
+    function scanConfirmationMessages($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$msgLines = array()){
+        $b = '';
+        $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=$infoCode\">";
+        $b .= "<div class=\"entry-confirmation $confirmationClass\">\n";
+        $b .= "<strong class=\"confirmation\">$confirmationMessage</strong><br>\n";
+        foreach( $msgLines as $k => $v){
+            $b .= ( is_numeric($k)) ? "<strong>" . $v . "</strong>" : "<strong>" . $k . ":</strong><em>" . $v . "</em>";
+            $b .= "<br>\n";
+        }
+        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Finish</strong></p>\n";
+        $b .= "</div>\n";
+        $b .= "</a>\n";
+        //print_pre($data,"scanConfirmationTableData");
+        return $b;
 
     }
+
+    // $b .= "<a class=\"invalid-entry\" href=\"./EntryCompleted.php?info=INVALID\">";
+    // $b .= "INVALID UUID<br>";
+    // $b .= "{$this->data['sd_uuid']}<br>";
+    // $b .= "Click anywhere on this field to EXIT<br>";
+    // $b .= "</a>\n";
+
 }
 
 ?>

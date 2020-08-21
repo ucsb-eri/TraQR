@@ -23,36 +23,48 @@ class pdoCore extends PDO {
         // stub
     }
     ////////////////////////////////////////////////////////////////////////////
-    function schema(){
+    /**
+    sqlite_master fields are:
+        Type     : Type is Index or Table.
+        name     : Index or table name
+        tbl_name : Name of the table
+        rootpage : rootpage, internal to SQLite
+        sql      : The SQL statement, which would create this table. Example:
+    **/
+    ////////////////////////////////////////////////////////////////////////////
+    function schema($returnBuf = FALSE){
         $scd = array();
         $b = '';
         $b .= "<p>Displaying Schema for $this->dsn</p>\n";
         $b .= "<pre>\n";
-        $thash = $this->getKeyedHash('name',"SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';");
+        //$thash = $this->getKeyedHash('name',"SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%';");
+
+        $thash = $this->getKeyedHash('name',"SELECT * FROM sqlite_master WHERE name NOT LIKE 'sqlite_%';");
+        $use_old = FALSE;
         foreach($thash as $th){
-         //print_pre($row,"rowdata");
-            $tablename = $th['name'];
-            $scd[$th['name']] = array();
-            $scd[$th['name']]['elem'] = array();
-            $scd[$th['name']]['string'] = '';
-
-            $b .= "CREATE TABLE IF NOT EXISTS " . $tablename . '(' . "\n";
-            $chash = $this->getKeyedHash('name',"PRAGMA table_info($tablename);");
-            //print_pre($chash,"table columns");
-
-            foreach($chash as $ch){
-                //print_pre($ch,"table columns");
-                $b .= sprintf("    %-20s %-10s%s%s%s\n",$ch['name'],$ch['type'],($ch['pk']) ? ' PRIMARY KEY' : '' ,($ch['notnull']) ? ' NOT NULL' : '',($ch['dflt_value'] != '') ? ' DEFAULT ' . $ch['dflt_value'] : '');
-                $scd[$th['name']]['elem'][] = $ch['name'];
-            }
-            $b .= '    );' . "\n";
-            // $pdost = $this->q("PRAGMA table_info($tablename);");
-            //print_pre($pdost,"table columns");
-            // foreach($pdost as $r){
-            //     print_pre($r,"table columns");
-            // }
+            $b .= $th['sql'] . "\n";
         }
         $b .= "</pre>\n";
+
+        if ( $returnBuf ) return $b;
+        print $b;
+    }
+    function schemaHelper($returnBuf = FALSE){
+        $scd = array();
+
+        $thash = $this->getKeyedHash('name',"SELECT * FROM sqlite_master WHERE name NOT LIKE 'sqlite_%';");
+        foreach($thash as $th){
+            if ($th['type'] == 'table'){
+                $scd[$th['name']] = array();
+                $scd[$th['name']]['elem'] = array();
+                $scd[$th['name']]['string'] = '';
+
+                $chash = $this->getKeyedHash('name',"PRAGMA table_info({$th['name']});");
+                foreach($chash as $ch){
+                    $scd[$th['name']]['elem'][] = $ch['name'];
+                }
+            }
+        }
 
         $h = '';
         $h .= "<p>Helper strings for updating schemas with existing data</p>\n";
@@ -63,7 +75,8 @@ class pdoCore extends PDO {
         }
         $h .= "</pre>\n";
 
-        print $b . $h;
+        if ( $returnBuf ) return $b;
+        print $h;
     }
     ////////////////////////////////////////////////////////////////////////////
     // this is an exact copy of the global print_pre found in printUtils.php
@@ -325,23 +338,6 @@ class pdoCore extends PDO {
             $last = $r;
         }
         $b .= '</table>' . NL;
-        return $b;
-    }
-    function scanConfirmation($confirmationMessage,$confirmationClass,$dbFields,$data){
-        $b = '';
-        $b .= "<a class=\"entry-confirmation-link\" href=\"Enter.php?Stage=DONE\">";
-        $b .= "<div class=\"entry-confirmation $confirmationClass\">\n";
-        $b .= "<strong class=\"confirmation\">$confirmationMessage:</strong><br>\n";
-        $b .= "<table class=\"confirmation\">\n";
-        foreach( $dbFields as $f){
-            if( $f == 'ip' ) continue;
-            if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
-        }
-        $b .= "</table>\n";
-        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Finish</strong></p>\n";
-        $b .= "</div>\n";
-        $b .= "</a>\n";
-        //print_pre($data,"scanConfirmationData");
         return $b;
     }
 }

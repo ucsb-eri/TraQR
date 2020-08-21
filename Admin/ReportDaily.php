@@ -9,7 +9,7 @@
     if ( authorized() ){
         $ce = new traQRpdo(getDSN());
         print '<section>' . NL;
-        print $ce->analyzeDataByDay();
+        print $ce->reportDataByDay();
         print '</section>' . NL;
     }
     else print authFail();

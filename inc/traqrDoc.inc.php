@@ -52,7 +52,10 @@ class menu {
 class traqrDoc extends htmlDoc {
      function __construct($title){
          parent::__construct($title);
+
+         // Add in our default css styles
          $this->css('css/traqr.css');
+         $this->css('css/traqr-data.css');
          $this->css('css/nav.css');
      }
      function menu(){
@@ -61,6 +64,9 @@ class traqrDoc extends htmlDoc {
          $m->addSubItem('index','About','/About/Index.php');
          if ( authorized()){
              $m->addItem('admin','Admin','/Admin/Index.php');
+             $m->addSubItem('admin','Gen New QRs','/Admin/GenQR.php');
+             $m->addSubItem('admin','QR Table','/Admin/qrGenMgmt.php');
+             $m->addSubItem('admin','ID Table','/Admin/IdentifierMgmt.php');
              $m->addSubItem('admin','Report All','/Admin/ReportAll.php');
              $m->addSubItem('admin','Report Daily','/Admin/ReportDaily.php');
              $m->addSubItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');

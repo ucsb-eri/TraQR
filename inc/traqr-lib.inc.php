@@ -57,9 +57,6 @@ class traQRMgr {
         $rowCntr++;
 
         foreach( $this->buildingEntries as $num){
-            // if( $num == 1 ){  // check for regeneration defaults
-            //     $val =
-            // }
             $b .= $this->htmlFormInput(14,'Building'.$num,'Building Name'.$num);
             $b .= $this->htmlFormInput(8,'Room'.$num,'Room #'.$num);
             $b .= '<br>' . NL;
@@ -76,8 +73,12 @@ class traQRMgr {
         $b .= '</div><!-- qr-form-container -->' . NL;
         $b .= "<br>" . NL;
 
+        print $b;
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
+    // This is checking for a form submission to reGenerate some QR codes
+    ////////////////////////////////////////////////////////////////////////////
     function checkPost(){
         $toCheck = array();
         $toCheck[] = 'Identifier';
@@ -99,11 +100,13 @@ class traQRMgr {
         // print_pre($_POST,"POST");
         // print_pre($GLOBALS,"GLOBALS");
     }
+    ////////////////////////////////////////////////////////////////////////////
     function doQRcodes(){
         $this->cqgen = array();
         foreach($this->buildingEntries as $num){
             $bldg = "Building".$num;
             $room = "Room".$num;
+            // Globals are used if we are passing data from a reGeneration call via POST
             if ( isset($GLOBALS[$bldg]) && isset($GLOBALS[$room]) && $GLOBALS[$bldg] != "" && $GLOBALS[$room] != "" ){
                 $this->cqgen[] = new traQRcode('cqr'.$num,$GLOBALS['Identifier'],$GLOBALS[$bldg],$GLOBALS[$room]);
             }
@@ -115,6 +118,7 @@ class traQRMgr {
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
+// This class is designed to manage a single traQR QR code
 ////////////////////////////////////////////////////////////////////////////////
 class traQRcode {
     public $baseurl = BASEURL;
@@ -123,18 +127,21 @@ class traQRcode {
     function __construct($key,$Identifier,$building,$room){
         $this->key = $key;
         $this->data = array();
-        $this->data['UUID'] = genUUID($Identifier,$building,$room);
-        $this->data['Building'] = $building;
-        $this->data['Room'] = $room;
-        $this->data['Identifier'] = $Identifier;
+        $this->data['qr_uuid'] = genUUID($Identifier,$building,$room);
+        $this->data['sd_uuid'] = genUUID($Identifier,$building,$room);
+        $this->data['qr_building'] = $building;
+        $this->data['qr_room'] = $room;
+        $this->data['qr_ident'] = $Identifier;
         $this->qrfiles = array();
         $this->urls = array();
         $this->qrurls = array();
     }
     function urlArgs($sep = "&"){
-        $elem = array();
+        $urlElements = array();
+        $urlElements['sd_uuid']  = $this->data['sd_uuid'];
+        $urlElements['sd_stage'] = $this->data['sd_stage'];
 
-        return http_build_query($this->data,'','&',PHP_QUERY_RFC3986);
+        return http_build_query($urlElements,'','&',PHP_QUERY_RFC3986);
         // basic
         // foreach($this->data as $key => $val){
         //     $elem[] = "${key}=" . "{$this->data[$key]}";
@@ -142,7 +149,7 @@ class traQRcode {
         // return implode("$sep",$elem);
     }
     function genURL($script,$mode,$sep = "&"){
-        return "{$this->baseurl}/{$script}?Mode={$mode}&" . $this->urlArgs($sep);
+        return "{$this->baseurl}/{$script}?sd_mode={$mode}&" . $this->urlArgs($sep);
     }
     function generateQRs(){
         // This was originally designed for INGRESS/EGRESS modes, but evolution has
@@ -151,31 +158,37 @@ class traQRcode {
         // hoping to ultimately have JUST the uuid field.
         foreach( $this->modes as $mode ){
             $ce = new traQRpdo(getDSN());
-            $ce->q("INSERT OR REPLACE INTO qrInfo (qi_ident,qi_building,qi_room,qi_uuid) VALUES (?,?,?,?)",array($this->data['Identifier'],$this->data['Building'],$this->data['Room'],$this->data['UUID']));
-            $ce->q("INSERT OR REPLACE INTO idInfo (id_ident) VALUES (?)",array($this->data['Identifier']));
+
+            // might be nice to check to see if entry exists and just update.
+            // not a huge overhead with the replace, but rowids will just continue to climb
+            //$count = $ce->fetchValNew("SELECT COUNT(*) FROM qrInfo WHERE qr_ident = ? AND qr_building = ? AND qr_room = ? AND qr_uuid' = ?;",array($this->data['Identifier'],$this->data['Building'],$this->data['Room'],$this->data['UUID']));
+            $ce->q("INSERT INTO qrInfo (qr_ident,qr_building,qr_room,qr_uuid) VALUES (?,?,?,?)",array($this->data['qr_ident'],$this->data['qr_building'],$this->data['qr_room'],$this->data['qr_uuid']));
+            $ce->q("INSERT INTO idInfo (id_ident) VALUES (?)",array($this->data['qr_ident']));
 
             $this->qrfiles[$mode] = '../var/qrs/' . $this->key . '-' . $mode . '.png';
-            //$this->data['Stage'] = 'NOTSET';
-            $this->data['Variant'] = 'DIRECT';
+            $this->data['sd_stage'] = 'INIT';
+            //$this->data['Variant'] = 'DIRECT';
+
+            // Not sure I really need both of these, need to scope that out
             $this->urls[$mode] = $this->genURL("Enter.php",$mode,"&amp;");
             $this->qrurls[$mode] = $this->genURL("Enter.php",$mode);
 
-            // //$this->data['Stage'] = 'NOTSET';
+            // //$this->data['sd_stage'] = 'NOTSET';
             // $this->data['Variant'] = 'VARIANT1';
             // $this->alturls1[$mode] = $this->genURL("Enter.php",$mode);
             //
-            //$this->data['Stage'] = 'NOTSET';
-            $this->data['Variant'] = 'VARIANT2';
-            $this->alturls2[$mode] = $this->genURL("Enter.php",$mode);
-
+            //$this->data['sd_stage'] = 'NOTSET';
+            // $this->data['Variant'] = 'VARIANT2';
+            // $this->alturls2[$mode] = $this->genURL("Enter.php",$mode);
+            //
             QRcode::png($this->genURL("Enter.php",$mode),$this->qrfiles[$mode]);
         }
     }
     function qrDisplayHTML(){
-        if ( $this->data['Identifier'] == '' ) return '';
-        if ( $this->data['Building'] == '' ) return '';
-        if ( $this->data['Room'] == '' ) return '';
-        $netid = preg_replace('/@ucsb.edu/','',$this->data['Identifier']);
+        if ( $this->data['qr_ident']    == '' ) return '';
+        if ( $this->data['qr_building'] == '' ) return '';
+        if ( $this->data['qr_room']     == '' ) return '';
+        $netid = preg_replace('/@ucsb.edu/','',$this->data['qr_ident']);
         $b = '';
         $b .= '<div class="qrs-container"><!-- begin container for QR set (both ingress and egress) -->' . NL;
         foreach( $this->modes as $mode ){
@@ -183,9 +196,11 @@ class traQRcode {
             $b .= '  <div class="qr-container"><!-- begin container for single QR (either ingress or egress) -->' . NL;
             $b .= '      <img class="qr-image" src="' . $this->qrfiles[$mode] . '" alt="QR code" />' . NL;
             $b .= '      <div class="qr-info">' . NL;
+            $b .= '      <a href="' . $this->urls[$mode] . '">';
             $b .= '      ' . '  ' . $netid . '<br>' . NL;
-            $b .= '      ' . $this->data['Building'] . '&nbsp;&nbsp;'  . $this->data['Room'] .'<br>' . NL;
-            $b .= '      <a href="' . $this->urls[$mode] . '">HTML Link</a>' . '<br>' . NL;
+            $b .= '      ' . $this->data['qr_building'] . '&nbsp;&nbsp;'  . $this->data['qr_room'] .'<br>' . NL;
+
+            $b .= '</a>' . '<br>' . NL;
             $b .= '      </div>' . NL;
             $b .= '  </div><!-- end container for single QR (either ingress or egress) -->' . NL;
         }

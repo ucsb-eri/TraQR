@@ -6,10 +6,13 @@
     $hd->htmlBeg();
 
     if ( authorized() ){
-        $b = '';
         $ce = new traQRpdo(getDSN());
-        $b .= $ce->schema();
+        $ce->schema();
+        print "<hr>\n";
+        $ce->schemaHelper();
+        print "<hr>\n";
 
+        $b = '';
         $b .= "<p>Favorite Method for updating a table schema at this time is:</p>
         <ul>
             <li>Update schema for table in InitDB</li>

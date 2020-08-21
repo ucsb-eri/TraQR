@@ -49,7 +49,7 @@
                 </li>
                 <li>qrInfo
                     <ul>
-                        <li>Add qi_uuid</li>
+                        <li>Add qr_uuid</li>
                         <li>add uuid field for our checksum/passcode/code data to associate with qrgen info</li>
                         <li>Remove building/room in scanData - those will be joined in from idInfo table</li>
                         <li>remove Mode? - not sure its needed in db at this point.<li>
