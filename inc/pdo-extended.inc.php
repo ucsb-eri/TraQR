@@ -29,7 +29,8 @@ class traQRpdo extends pdoCore {
         $this->data['sd_ets'] = date('Ymd-His');
         $this->data['sd_eepoch'] = date('U');
         $this->data['sd_valid'] = TRUE;
-        $this->data['sd_ip'] = $_SERVER['REMOTE_ADDR'];
+        $this->data['sd_iip'] = $_SERVER['REMOTE_ADDR'];
+        $this->data['sd_eip'] = $_SERVER['REMOTE_ADDR'];
     }
     ////////////////////////////////////////////////////////////////////////////
     function initDB(){
@@ -46,25 +47,21 @@ class traQRpdo extends pdoCore {
         )";
 
         $q = "CREATE TABLE IF NOT EXISTS scanData (
-        sd_id       INTEGER PRIMARY KEY,                         -- alias for rowid
-        sd_uuid     TEXT,                                        -- MD5 encoding of Identifier, Building and Room
-        sd_mode     TEXT,                                        -- INGRESS or EGRESS - this may be redundant soon
-        sd_status   TEXT,                                        -- Various Status strings
-        -- Identifier  TEXT,                                        -- Identifier of person that scanned QR code
-        -- Building    TEXT,                                        -- Building
-        -- Room        TEXT,                                        -- Room # in Building
-        sd_ds       TEXT,                                        -- Datestamp YYYY-MM-DD
-        -- aCMZ        TEXT,                                        -- Air handling contamination management zone (CMZ)
-        -- pCMZ        TEXT,                                        -- Physical contamination management zone (CMZ)
-        sd_its      TEXT DEFAULT '',                             -- INGRESS timestamp
-        sd_iepoch   TIMESTAMP DEFAULT (strftime('%s','now')),    -- INGRESS epoch (ctime) value
-        sd_ets      TEXT DEFAULT '',                             -- EGRESS timestamp
-        sd_eepoch   TIMESTAMP DEFAULT (strftime('%s','now')),    -- EGRESS epoch (ctime) value
-        sd_stay     INTEGER,                                     -- seconds of how long the users stay was
-        sd_hrstay   TEXT,                                        -- human readable form for length of stay HH:MM?  H.DDDD
-        sd_flags    TEXT,                                        -- Flags - Not sure how I want to use this yet, extra field for now
-        sd_extra    TEXT,                                        -- extra unused field reclaimed from previous schema
-        sd_ip       TEXT                                         -- IP submission came from
+        sd_id        INTEGER PRIMARY KEY,                         -- alias for rowid
+        sd_uuid      TEXT,                                        -- MD5 encoding of Identifier, Building and Room
+        sd_mode      TEXT,                                        -- INGRESS or EGRESS - this may be redundant soon
+        sd_status    TEXT,                                        -- Various Status strings
+        sd_ds        TEXT,                                        -- Datestamp YYYY-MM-DD
+        sd_its       TEXT DEFAULT '',                             -- INGRESS timestamp
+        sd_iepoch    TIMESTAMP DEFAULT (strftime('%s','now')),    -- INGRESS epoch (ctime) value
+        sd_ets       TEXT DEFAULT '',                             -- EGRESS timestamp
+        sd_eepoch    TIMESTAMP DEFAULT (strftime('%s','now')),    -- EGRESS epoch (ctime) value
+        sd_stay      INTEGER,                                     -- seconds of how long the users stay was
+        sd_hrstay    TEXT,                                        -- human readable form for length of stay HH:MM?  H.DDDD
+        sd_flags     TEXT,                                        -- Flags - Not sure how I want to use this yet, extra field for now
+        sd_extra     TEXT,                                        -- extra unused field reclaimed from previous schema
+        sd_iip       TEXT,                                        -- IP address on INGRESS
+        sd_eip       TEXT                                         -- IP address on EGRESS
         );";
         $this->exec($q);
 
@@ -110,6 +107,17 @@ class traQRpdo extends pdoCore {
         //print_pre($q,"query: $q");
         $this->exec($q);
 
+        $q = "CREATE TABLE IF NOT EXISTS auth (
+        au_id          INTEGER PRIMARY KEY,
+        au_user        TEXT,                                     -- user
+        au_pass        TEXT,                                     -- md5 encoded pass
+        au_role        TEXT,                                     -- role
+        au_extra       TEXT,                                     -- extra text field for possible use later
+        UNIQUE(au_user,au_pass) ON CONFLICT IGNORE
+        );";
+        //print_pre($q,"query: $q");
+        $this->exec($q);
+
         $q = "CREATE VIEW IF NOT EXISTS viewAll AS SELECT
               *,
               qrInfo.*,
@@ -125,6 +133,11 @@ class traQRpdo extends pdoCore {
         $this->exec($q);
 
         return true;
+        /**
+Used the following to pull qrInfo and idInfo over into newer system.
+echo "SELECT qi_uuid,qi_ident,qi_building,qi_room FROM qrInfo WHERE qi_ident like '%@%ucsb.edu';" | sqlite3 covidqr.sqlite3 | sed -e "s/|/','/g" -e "s/^/('/" -e "s/$/');/" -e 's/^/INSERT INTO qrInfo (qr_uuid,qr_ident,qr_building,qr_room) VALUES /'
+echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,id_extra FROM idInfo WHERE id_ident like '%@%ucsb.edu';" | sqlite3 covidqr.sqlite3 | sed -e "s/|/','/g" -e "s/^/('/" -e "s/$/');/" -e 's/^/INSERT INTO idInfo (id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,id_extra) VALUES /'
+        **/
     }
     ////////////////////////////////////////////////////////////////////////////////
     function loadGetData(){
@@ -178,7 +191,7 @@ class traQRpdo extends pdoCore {
     }
     ////////////////////////////////////////////////////////////////////////////
     // This routine is called on each pass into the Enter.php script, the GET
-    // vars determine what happens from there.
+    // var st_stage determines what happens from there.
     ////////////////////////////////////////////////////////////////////////////
     function submitDataForProcessing(){
         $this->loadGetData();
@@ -190,13 +203,15 @@ class traQRpdo extends pdoCore {
         }
 
         /**
-        Need to review the naming and such here to have cleaner logic...
+        Should review logic/naming in this area to improve readability
         **/
         switch ($this->data['sd_stage']){
             case 'INIT':
+                // this is coming from the initial scan or link click to be reviewed
                 $this->dataToDbReview();
                 break;
             case 'REVIEW':
+                // this happens AFTER the step above has been reviewed and confirmed
                 $this->dataToDbConfirmed();  // this actually submits data
                 break;
             default:
@@ -230,51 +245,33 @@ class traQRpdo extends pdoCore {
         }
 
         // this should work since we made it past validation.
-        // could use this as validation instead though
+        // could use this to validate instead if we wanted, but the modularity of the other (which is reused) has value
         $foundqr = $this->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_uuid = ?;",array($this->data['sd_uuid']));
         //print_pre($foundqr,"searched qrInfo");
         if (isset($foundqr[$this->data['sd_uuid']])){
+            // this info is used in the confirm button below
             $qrInfo = $foundqr[$this->data['sd_uuid']];
         }
 
-        // if (! $this->uuidIsValid($this->data['sd_uuid']) ){
-        //     //print "YIKES!  Invalid UUID {$this->data['sd_uuid']}<br>\n";
-        //     $b .= "<a class=\"invalid-entry\" href=\"./EntryCompleted.php?info=INVALID\">";
-        //     $b .= "INVALID UUID<br>";
-        //     $b .= "{$this->data['sd_uuid']}<br>";
-        //     $b .= "Click anywhere on this field to EXIT<br>";
-        //     $b .= "</a>\n";
-        //     print $b;
-        //     return;
-        // }
-
-        /**
-        // see if we have any existing records for Day/Identifier/Building/Room combo...
-        // This will need to change as we will need to do a join, most likely via a view
-        **/
+        // need to build a where clause to match datestamp and the UUID which is Identifier, Building and Room encoded as one
         $whereData = array(
             'sd_uuid'     => $this->data['sd_uuid'],
             'sd_ds'       => $this->data['sd_ds'],
-            // 'Building'   => $this->data['Building'],
-            // 'Room'       => $this->data['Room'],
         );
 
         // get rowid of the FIRST location matching entry, this allows us to update ONLY the first matching entry instead of all
         $wd = $this->generateAndedWhereClause($whereData);
         $userLocationDateMatch = $this->getKeyedHash('sd_id',"SELECT * FROM scanData " . $wd['qstr'] . " ORDER BY sd_iepoch;",$wd['data']);
 
-        /**
-        A lot of this logic can be simplified as we are not flagging intermediate entries anymore, we are choosing the ingress/egress automatcially
-        **/
+        // This logic controls whether this scan becomes an INGRESS or an EGRESS
+        // which is then attached to the confirmation form
         if( count($userLocationDateMatch) == 0){
-            // this is a new INGRESS for the day
             $this->data['sd_mode'] = 'INGRESS';
         }
         else{
-            // get last sd_id
-            foreach($userLocationDateMatch as $uldm){
-                $lastqid = $uldm['sd_id'];
-            }
+            // so there is at least one matching record, the ORDER BY will make the last one the most recent
+            // determine the last matching set
+            foreach($userLocationDateMatch as $uldm) $lastqid = $uldm['sd_id'];
             if ($userLocationDateMatch[$lastqid]['sd_mode'] == 'INGRESS'){
                 $this->data['sd_mode'] = 'EGRESS';
             }
@@ -288,19 +285,16 @@ class traQRpdo extends pdoCore {
             }
         }
 
-        // Need to build link now....
-        // pass in $this->data,keys to use)
+        // Build our links now pass in $this->data,keys to use)
         $this->data['sd_stage'] = 'REVIEW';
         $getstr = http_build_query($this->data);
-
 
         // Want to add some information to this button, so user can see bldg/room info
         // at the moment, all I have is the uuid, pretty useless, but hey...
         $b .= "<a class=\"confirm-entry\" href=\"./Enter.php?" . $getstr . "\">";
         $b .= "Confirm " . $this->data['sd_mode'] . " Data<br>";
         $b .= $qrInfo['qr_ident'] . "<br>\n";
-        $b .= $qrInfo['qr_building'] . "<br>\n";
-        $b .= $qrInfo['qr_room'] . "<br>\n";
+        $b .= $qrInfo['qr_building'] . " " . $qrInfo['qr_room'] . "<br>\n";
         $b .= "</a>\n";
 
 
@@ -342,8 +336,8 @@ class traQRpdo extends pdoCore {
             $dbFields[] = 'sd_its';
             $dbFields[] = 'sd_iepoch';
             $dbFields[] = 'sd_status';
-            $dbFields[] = 'sd_ip';
-            //$dbFields[] = 'sd_uuid';
+            $dbFields[] = 'sd_iip';
+            unset($this->data['sd_eip']);
             $this->data['sd_status'] = 'UNPAIR-IN';
 
             $qd = $this->insertQueryData($this->tablename, $this->data,$dbFields);
@@ -353,28 +347,32 @@ class traQRpdo extends pdoCore {
             print $this->scanConfirmationTable("Successful Ingress Scan+Confirm","success",'DONE',$dbFields,$this->data);
         }
         elseif($this->data['sd_mode'] == "EGRESS" ){
+            // EGRESS is more complicated than INGRESS since we need to match a
+            // previous record
             $dbFields[] = 'sd_ets';
             $dbFields[] = 'sd_eepoch';   // replace the value already in db
             $dbFields[] = 'sd_status';
             $dbFields[] = 'sd_stay';
-            //$dbFields[] = 'sd_uuid';
-            $this->data['sd_status'] = 'PAIRED';
+            $dbFields[] = 'sd_eip';
+            unset($this->data['sd_iip']);
             $whereData = array(
                 'sd_ds'     => $this->data['sd_ds'],
                 'sd_uuid'   => $this->data['sd_uuid'],
                 'sd_ets'    => '',
             );
 
-            // get rowid of the FIRST location matching entry, this allows us to update ONLY the first matching entry instead of all
+            // Generate where clause to collect INGRESS entries that match in Date, Identifier, Building and Room
             $wd = $this->generateAndedWhereClause($whereData);
+            $ingressHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY sd_iepoch;",$wd['data']);
+            // previously we selected only thet LAST INGRESS to work with, simpler, but leaves the others in limbo
             // $singleHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY iepoch LIMIT 1;",$wd['data']);
 
-            $ingressHash = $this->getKeyedHash('sd_id',"SELECT * FROM $this->tablename " . $wd['qstr'] . " ORDER BY sd_iepoch;",$wd['data']);
 
             /**
-            A lot of this logic can be simplified as we are toggling between the two modes
-            Need to scope more heavily and test
+            There may be opportunities to simplify this logic since the system now determines the mode
+            Need to scope more thoroughly and test
             **/
+            $this->data['sd_status'] = 'PAIRED';
             $updatedEntries = 0;
             foreach($ingressHash as &$ih){
                 $whereData['sd_id'] = $ih['sd_id'];
@@ -383,19 +381,21 @@ class traQRpdo extends pdoCore {
                 $pdos = $this->q($qd['qstr'],$qd['data']);
                 $affected = $pdos->rowCount();
                 $updatedEntries += $affected;
-                //print "update: $affected, updated Total: $updatedEntries<br>";
 
-                // So, only the first one gets the PAIRED value, all subsequent
+                // Once we have updated the FIRST entry to match, we switch the status to EXTRA-IN
                 $this->data['sd_status'] = 'EXTRA-IN';
             }
 
             //print "Rows Affected == $affected<br>";
             if($updatedEntries == 0){
                 // We need to remove the 'stay' entry from dbFields...
-                foreach($dbFields as $k => $v){
-                    if ($v == 'sd_stay') break;
+                if(($key = array_search('sd_stay',$dbFields)) !== FALSE ){
+                    unset($dbFields[$key]);
                 }
-                unset($dbFields[$k]);
+                // foreach($dbFields as $k => $v){
+                //     if ($v == 'sd_stay') break;
+                // }
+                // unset($dbFields[$k]);
 
                 //print "No matching INGRESS record found, inserting unmatched EGRESS<br>";
                 $this->data['sd_status'] = "UNPAIR-OUT";
@@ -414,34 +414,14 @@ class traQRpdo extends pdoCore {
             else {
                 // because of fetching the rowid of the first match above coupled with the LIMIT 1
                 // this case shouldn't be able to happen now.
-                print $this->scanConfirmationTable("SR Matched multiple ($updatedEntries) INGRESS entries for QR scanned data","problematic",'MULTIPLE',$dbFields,$this->data);
+                print $this->scanConfirmationTable("Matched multiple ($updatedEntries) INGRESS entries for QR scanned data","problematic",'MULTIPLE',$dbFields,$this->data);
                 //print "More than 1 matching INGRESS record found indicating some sort of issue<br>";
             }
         }
-
-        //print "<a href=\"./Enter.php?sd_stage=DONE\">Click DONE with data entry</a><br>\n";
-
         // print_pre($dbFields,"dbFields");
         // print_pre($this->data,"data");
     }
     ////////////////////////////////////////////////////////////////////////////
-    /**
-    This is deprecated now, feeding this to a separate, non-mobile page
-    **/
-    function dataEntryComplete(){
-        $b = '';
-        $b .= "<p>Thanks for using the scanner!</p>
-        <p>Please, stay safe:<br>
-        &nbsp;&nbsp;Wash Hands thoroughly and frequently<br>
-        &nbsp;&nbsp;Avoid touching your face with unwashed hands<br>
-        &nbsp;&nbsp;Maintain Social Distance when possible<br>
-        &nbsp;&nbsp;Wear a mask when unable to Social Distance<br>
-        </p>
-        <img src=\"./media/traQR-safety.png\"><br>
-        <a href=\"./\">Exit to Main page</a><br>
-        ";
-        print $b;
-    }
     ////////////////////////////////////////////////////////////////////////////
     function reportDataByUser(){
         $this->q("UPDATE scanData SET sd_stay=(sd_eepoch - sd_iepoch) WHERE sd_status = 'PAIRED';");
@@ -512,16 +492,12 @@ class traQRpdo extends pdoCore {
             $h['flags'] = '';
             $h['.td-sd_status']   = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
-            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = $this->seconds2hr($h['sd_stay']);
+            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = seconds2hr($h['sd_stay']);
         }
         $flds = array('sd_id','id_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
         $b .= $this->genericDisplayTable($dayHash,$flds);
         $b .= '</div>' . NL;
         return $b;
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function seconds2hr($secs){
-        return sprintf('%d:%02d:%02d',($secs/3600),(($secs%3600)/60),($secs%60));
     }
     ////////////////////////////////////////////////////////////////////////////
     function reportDataForDS($ds){
@@ -562,7 +538,7 @@ class traQRpdo extends pdoCore {
             $h['flags'] = '';
             $h['.td-sd_tatus']   = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
-            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = $this->seconds2hr($h['sd_stay']);
+            if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = seconds2hr($h['sd_stay']);
         }
 
         $flds = array('sd_id','qr_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
@@ -680,6 +656,24 @@ class traQRpdo extends pdoCore {
         }
         return $b;
     }
+    function authManagement(){
+        $table = 'auth';
+        $rowkey = 'au_id';
+        $b = '';
+        $b .= $this->rowDeletion($table,$rowkey);
+        $b .= $this->rowEdit($table,$rowkey,array('au_role'));
+        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
+        foreach($hash as &$h){
+            $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+            $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
+        }
+        $flds = array('au_id','au_user','au_pass','au_role','delete','edit');
+        $b .= "<div class=\"generic-display-table\"><!-- begin generic-display-table -->\n";
+        $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
+        $b .= $this->genericDisplayTable($hash,$flds);
+        $b .= "</div><!-- end generic-display-table -->\n";
+        print $b;
+    }
     ////////////////////////////////////////////////////////////////////////////
     function displayIdInfo(){
         $table = 'idInfo';
@@ -745,32 +739,14 @@ class traQRpdo extends pdoCore {
         print $b;
     }
     ////////////////////////////////////////////////////////////////////////////
-    // because this uses md5 with provided info strings, the codes will be
-    // reproducable.  I feel like this is perfect for what we are trying to do here.
-    // If we want them to be less producable, we could add time string
-    // into them.  To get truly unique, we would need to look at some of the crypto
-    // generators.  But in either of these last two possibilities, the uuid becomes
-    // non-reproducable (unless we save the epoch of the original creation).
-    // ////////////////////////////////////////////////////////////////////////////
-    // function generateUUIDfromQRInfo(){
-    //     $hash = $this->getKeyedHash('qr_id',"SELECT * FROM qrInfo;");
-    //     foreach($hash as &$h){
-    //         if( TRUE ){
-    //             $h['qr_uuid'] = genUUID($h['qr_ident'],$h['qr_building'],$h['qr_room']);
-    //             $q = "UPDATE qrInfo SET qr_uuid = ? WHERE qr_id = ?;";
-    //             $this->q($q,array($h['qr_uuid'],$h['qr_id']));
-    //         }
-    //     }
-    // }
-    ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     function reportAll(){
         $b = '';
 
-        $flds = array('sd_id','LastName','qr_building','qr_room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_ip','sd_flags');
+        $flds = array('sd_id','LastName','qr_building','qr_room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
 
         // Fields array here needs to align with the db fields/view
-        $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_ip','sd_flags');
+        $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
 
         // $this->q("CREATE TEMP VIEW IF NOT EXISTS viewAll AS SELECT
         //       *,
@@ -915,15 +891,7 @@ class traQRpdo extends pdoCore {
         $b .= "</a>\n";
         //print_pre($data,"scanConfirmationTableData");
         return $b;
-
     }
-
-    // $b .= "<a class=\"invalid-entry\" href=\"./EntryCompleted.php?info=INVALID\">";
-    // $b .= "INVALID UUID<br>";
-    // $b .= "{$this->data['sd_uuid']}<br>";
-    // $b .= "Click anywhere on this field to EXIT<br>";
-    // $b .= "</a>\n";
-
 }
 
 ?>

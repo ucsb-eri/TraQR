@@ -18,6 +18,7 @@
         $b .= "<li>" . $hd->relUrl('Util/dbSchema.php','DB Schema') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Enter.php','Entry Script (for Testing)') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('About/Index.php','About Page') . "</li>\n";
+        $b .= "<li>" . $hd->relUrl('Login.php','Login') . "</li>\n";
         $b .= "<li><a href=\"http://traqr.eri.ucsb.edu/Enter.php?sd_uuid=\">Test link with UCSBNetID in it</li>\n";
 
         $b .= "</ul>\n";

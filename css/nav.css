@@ -65,3 +65,29 @@ li.dropdown {
 .dropdown:hover .dropdown-content {
   display: block;
 }
+
+.login-info {
+    display: inline-block;
+    float: right;
+    /*
+    */
+}
+nav {
+    display: inline;
+    padding-left: 0px;
+    padding-right: 0px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    /*
+    border: 1px solid green;
+    */
+}
+a.nav {
+    padding-left: 10px;
+    padding-right: 10px;
+    margin-left: 2px;
+    margin-right: 2px;
+    /*
+    border: 1px solid gray;
+    */
+}

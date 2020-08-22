@@ -7,9 +7,14 @@ function print_pre($var,$label){
     print_r($var);
     print "</pre>";
 }
+////////////////////////////////////////////////////////////////////////////////
 function genUUID($id,$bldg,$room){
     $mergedStr = "$id, $bldg, $room";
     return md5($mergedStr);
+}
+////////////////////////////////////////////////////////////////////////////////
+function seconds2hr($secs){
+    return sprintf('%d:%02d:%02d',($secs/3600),(($secs%3600)/60),($secs%60));
 }
 
 ?>

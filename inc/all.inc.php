@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -34,6 +36,7 @@ function getDSN(){
 require_once(__DIR__ . '/../config.php');
 require_once(__DIR__ . '/utils.inc.php');
 require_once(__DIR__ . '/auth.inc.php');
+require_once(__DIR__ . '/traqrAuth.inc.php');
 require_once(__DIR__ . '/pdo.inc.php');
 require_once(__DIR__ . '/pdo-extended.inc.php');
 require_once(__DIR__ . '/traqrDoc.inc.php');

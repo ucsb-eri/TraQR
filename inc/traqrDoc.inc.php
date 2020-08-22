@@ -58,6 +58,7 @@ class traqrDoc extends htmlDoc {
          $this->css('css/traqr-data.css');
          $this->css('css/nav.css');
      }
+
      function menu(){
          $m = new menu('nav','navlink');
          $m->addItem('index','Home','/Index.php');
@@ -65,6 +66,7 @@ class traqrDoc extends htmlDoc {
          if ( authorized()){
              $m->addItem('admin','Admin','/Admin/Index.php');
              $m->addSubItem('admin','Gen New QRs','/Admin/GenQR.php');
+             $m->addSubItem('admin','Auth Table','/Admin/authMgmt.php');
              $m->addSubItem('admin','QR Table','/Admin/qrGenMgmt.php');
              $m->addSubItem('admin','ID Table','/Admin/IdentifierMgmt.php');
              $m->addSubItem('admin','Report All','/Admin/ReportAll.php');
@@ -72,10 +74,28 @@ class traqrDoc extends htmlDoc {
              $m->addSubItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');
 
              $m->addItem('util','Utils/Dev/Tools','/Util/Index.php');
-             $m->addSubItem('util','PHPInfo','/Util/phpinfo.php');
+             $m->addSubItem('util','PHP Info','/Util/phpinfo.php');
+             $m->addSubItem('util','Session Info','/Util/sessionInfo.php');
              $m->addSubItem('util','DB SChema','/Util/dbSchema.php');
          }
-         return "<nav>\n" . $m->html() . "</nav>\n";
+
+         $lm = new menu('nav','navlink');
+         if( isset($_SESSION['au_user'])){
+             $lm->addItem('login','User: ' . $_SESSION['au_user'] . ' (' . $_SESSION['au_role'] . ')','');
+             $lm->addSubItem('login','Sign Out','/Logout.php');
+         }
+         else {
+             $lm->addItem('login','Login','/Login.php');
+         }
+        // $linfo =  (isset($_SESSION['au_user'])) ? "Logged in as: " . $_SESSION['au_user'] : "<a href=\"/Login.php\">Login</a>";
+    //     $linfo .=  (isset($_SERVER['REMOTE_USER'])) ? "RU: " . $_SERVER['REMOTE_USER'] : " (Login Link)";
+         $l = '';
+         $l .= "<div class=\"login-info\">";
+         $l .= $lm->html();
+         $l .= "</div>\n";
+         //print "$l<br>\n";
+
+         return "<nav>\n" . $m->html() . $l . "</nav>\n";
      }
      function navHTML(){
          $b = '';

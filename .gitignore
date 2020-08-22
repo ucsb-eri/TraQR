@@ -1,5 +1,5 @@
 # Nothing to add here ... Yet
 .unused
 config.php
-var/dbs/*.sqlite3
+var/dbs/*.sqlite3*
 var/qrs/*.png
