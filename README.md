@@ -19,6 +19,8 @@ The primary benefits of this system in its early stages are:
 
 
 # Installation/Configuration
+Please See the [Wiki](../../wiki) for Installation.
+
 You will need sudo privs or access to root account for a few items upfront after cloning the repo.
 First order of business is to make sure that the webserver is able to write to a limited set of locations.
 
