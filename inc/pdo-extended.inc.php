@@ -13,6 +13,11 @@ class traQRpdo extends pdoCore {
         // $this->qrScanFields[] = 'Variant';
         // $this->qrScanFields[] = 'sd_stage';
         //array('Mode','Identifier','Building','Room','Variant','sd_stage');
+
+        // for now, every time this script runs lets attempt to create an auto-daily backup.
+        // overhead on the attempt is pretty low until I figure out a better way to regulate that.
+        // will likely end up implementing backups via local crons
+        //$this->dbBackup(true);
     }
     ////////////////////////////////////////////////////////////////////////////
     function generateEmailAddresses(){
@@ -288,25 +293,27 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         // Build our links now pass in $this->data,keys to use)
         $this->data['sd_stage'] = 'REVIEW';
         $getstr = http_build_query($this->data);
+        $url = "./Enter.php?" . $getstr ;
 
         // Want to add some information to this button, so user can see bldg/room info
         // at the moment, all I have is the uuid, pretty useless, but hey...
-        $b .= "<a class=\"confirm-entry\" href=\"./Enter.php?" . $getstr . "\">";
-        $b .= "Confirm " . $this->data['sd_mode'] . " Data<br>";
-        $b .= $qrInfo['qr_ident'] . "<br>\n";
-        $b .= $qrInfo['qr_building'] . " " . $qrInfo['qr_room'] . "<br>\n";
-        $b .= "</a>\n";
 
+        $b .=  $this->scanConfirm($url,$qrInfo['qr_ident'],$qrInfo['qr_building'],$qrInfo['qr_room']);
 
         $b .= "<hr>\n";
-
-        $b .= "<a class=\"skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
-        $b .= "Skip " . $this->data['sd_mode'] . " Confirmation";
-        $b .= "</a>\n";
+        $b .=  $this->scanCancel();
 
         print $b;
-
-        //print_pre($this->data,"Confirmation data");
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function scanConfirm($url,$ident,$building,$room){
+        $b = '';
+        $b .= "<a class=\"confirm-entry\" href=\"$url\">";
+        $b .= "Confirm " . $this->data['sd_mode'] . " Data<br>";
+        $b .=  "$ident<br>\n";
+        $b .=  "$building $room<br>\n";
+        $b .= "</a>\n";
+        return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
     // With the confirm button, this is where the data is actually written out
@@ -328,7 +335,10 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         }
 
         if (! $this->data['sd_valid']){
-            print $this->scanConfirmationTable("Too much time between scan and confirmation","problematic",'TIMEOUT',$dbFields,$this->data);
+            // Need to provide a link to restart the process instead of just bailing
+//            print $this->scanConfirmationTable("Too much time between scan and confirmation","problematic",'TIMEOUT',$dbFields,$this->data);
+            print $this->scanProcessRestart();
+            print $this->scanCancel();
             return;
         }
 
@@ -656,18 +666,75 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         }
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
+    function formSelect($form,$name,$values,$currVal){
+        $b = '';
+        $b .= "<select name=\"$name\" id=\"$name\" form=\"$form\">\n";
+        foreach($values as $v){
+            $selected = ($v == $currVal) ? "selected" : "";
+            $b .= "<option value=\"$v\" $selected>$v</option>\n";
+        }
+        $b .= "</select>\n";
+        return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function newUser(){
+        global $authFlags;
+        $b = '';
+        // process form info
+        if( array_key_exists('au_user',$_POST) && array_key_exists('password',$_POST) && array_key_exists('au_role',$_POST)){
+            // get md5 value of password string
+            $f = 'au_role';
+            $filtered = preg_replace('/[^a-z]/','',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+            $this->data[$f] = ( array_key_exists($filtered,$authFlags)) ? $filtered : 'none';
+
+            $f = 'au_user';
+            $this->data[$f] = preg_replace('/[^a-zA-Z0-9]/','',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+
+            $f = 'password';
+            $this->data['au_pass'] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+
+            // need to insert data
+            $b .= "Inserting new user<br>";
+            $this->q("INSERT OR REPLACE INTO auth (au_user,au_pass,au_role) VALUES (?,?,?);",array($this->data['au_user'],$this->data['au_pass'],$this->data['au_role']));
+        }
+
+        // print_pre($_POST,__METHOD__ . ": POST Vars");
+        // print_pre($this->data,__METHOD__ . ": data Vars");
+        $currVals = array();
+        foreach(array('au_role','au_user') as $f){
+            $currVals[$f] = ( isset($this->data[$f]) ) ? $this->data[$f] : '';
+        }
+
+        // create form
+        $b .= "<form name=\"New_User\" id=\"New_User\" method=\"post\">\n";
+        $b .= "<input type=\"text\" name=\"au_user\" placeholder=\"User\" value=\"{$currVals['au_user']}\" size=\"24\">\n";
+        $b .= "<input type=\"password\" name=\"password\" placeholder=\"Password\" value=\"\" size=\"24\">\n";
+        $b .= $this->formSelect('New_User','au_role',array_keys($authFlags),$currVals['au_role']);
+        $b .= "<input type=\"submit\" name=\"NEW_USER\"  value=\"Add User\">\n";
+        $b .= "</form>\n";
+        return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
     function authManagement(){
         $table = 'auth';
         $rowkey = 'au_id';
         $b = '';
-        $b .= $this->rowDeletion($table,$rowkey);
-        $b .= $this->rowEdit($table,$rowkey,array('au_role'));
-        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
-        foreach($hash as &$h){
-            $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
-            $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
+        if( authorized('TRAQR','root')){
+            $b .= $this->newUser();
+            $b .= $this->rowDeletion($table,$rowkey);
+            $b .= $this->rowEdit($table,$rowkey,array('au_role'));
         }
-        $flds = array('au_id','au_user','au_pass','au_role','delete','edit');
+        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
+        $flds = array('au_id','au_user','au_pass','au_role');
+        if( authorized('TRAQR','root')) {
+            array_push($flds,'edit');
+            array_push($flds,'delete');
+            foreach($hash as &$h){
+                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+                $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
+            }
+        }
         $b .= "<div class=\"generic-display-table\"><!-- begin generic-display-table -->\n";
         $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
         $b .= $this->genericDisplayTable($hash,$flds);
@@ -871,10 +938,32 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
         }
         $b .= "</table>\n";
-        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Finish</strong></p>\n";
+        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Exit</strong></p>\n";
         $b .= "</div>\n";
         $b .= "</a>\n";
         //print_pre($data,"scanConfirmationData");
+        return $b;
+    }
+    function scanCancel(){
+        $b = '';
+        $b .= "<a class=\"skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
+        $b .= "Skip " . $this->data['sd_mode'] . " Confirmation";
+        $b .= "</a>\n";
+        return $b;
+    }
+    function scanProcessRestart(){
+        // https://traqr.eri.ucsb.edu/Enter.php?sd_mode=BIDIR&sd_uuid=8c195d8439c2bbdcd9aae0a4b7fd82cb&sd_stage=INIT
+        $b = '';
+        $b .= "<a class=\"entry-confirmation-link\" href=\"Enter.php?sd_mode=BIDIR&sd_uuid={$this->data['sd_uuid']}&sd_stage=INIT\">";
+        $b .= "<div class=\"entry-confirmation problematic\">\n";
+        $b .= "<strong class=\"confirmation\">TIMEOUT: too much time between scan and confirmation</strong><br>\n";
+        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in block to<br>";
+        $b .= "Restart Entry/Confirmation Process<br>";
+        //$b .= "{$this->data['sd_building']} {$this->data['sd_room']}";
+        $b .= "</strong></p>\n";
+        $b .= "</div>\n";
+        $b .= "</a>\n";
+        //print_pre($data,"scanConfirmationTableData");
         return $b;
     }
     function scanConfirmationMessages($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$msgLines = array()){
@@ -890,6 +979,39 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= "</div>\n";
         $b .= "</a>\n";
         //print_pre($data,"scanConfirmationTableData");
+        return $b;
+    }
+    // Manual backups can be taken no more frequently that once a minute,
+    // auto backups can be run daily.
+    // Want to compress the output, so having to modify code a bit!!
+    function dbBackup($autoDaily = false){
+        $b = '';
+        $ds = date('Ymd');
+        $ts = date('Ymd-Hi');
+        $bksuff = ($autoDaily) ? "tab-$ds" : "tmb-$ts";
+        $bkfile =  REL . BKDIR . "traqr.slite3-$bksuff.gz";
+        $b .= "<p>Attempting to Backup SQLite db {$this->pdoFile} to: $bkfile<br>\n";
+
+        if( file_exists($bkfile)) {
+            $b .= "<p>A backupfile already exists for: $bkfile ... skipping</p>\n";
+            return $b;
+        }
+        if( ($gzb = gzencode(file_get_contents($this->pdoFile))) === false){
+            $b .= "<p>gzencode failed!  Possibly a permissions error???</p>";
+        }
+        else {
+            $fp = gzopen($bkfile,'w9');
+            gzwrite($fp,$gzb);
+            gzclose($fp);
+        }
+        // if( copy($this->pdoFile,$bkfile) === false){
+        //     $b .= "<p>Copy Failed!  Possibly a permissions error.</p>";
+        // }
+        // else {
+        //     if( gzCompressFile($bkfile) === false){
+        //         $b .= "<p>Compression Failed!  Not sure why.</p>\n";
+        //     }
+        // }
         return $b;
     }
 }

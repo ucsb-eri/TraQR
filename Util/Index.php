@@ -16,10 +16,12 @@
         $b .= "<li>" . $hd->relUrl('Util/phpinfo.php','PHP Info') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Util/ClearTestEntries.php','Clear Entries for *@test.ucsb.edu') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Util/dbSchema.php','DB Schema') . "</li>\n";
+        $b .= "<li>" . $hd->relUrl('Util/dbBackup.php','DB Backup') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Enter.php','Entry Script (for Testing)') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('About/Index.php','About Page') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Login.php','Login') . "</li>\n";
-        $b .= "<li><a href=\"http://traqr.eri.ucsb.edu/Enter.php?sd_uuid=\">Test link with UCSBNetID in it</li>\n";
+        $b .= "<li>" . $hd->relUrl('Util/authTesting.php','Auth Testing') . "</li>\n";
+        $b .= "<li><a href=\"http://traqr.eri.ucsb.edu/Enter.php?sd_uuid=\">Older Test link from version with UCSBNetID in it.  (Will be deprecated soon.)</li>\n";
 
         $b .= "</ul>\n";
 

@@ -9,8 +9,11 @@ class menuItem {
         $this->link = $link;
         $this->menuSubItems = array();
     }
-    function addSubItem($label,$link = '#'){
+    function addItem($label,$link = '#'){
         $this->menuSubItems[] = "<a class=\"{$this->aclass}\" href=\"$link\">$label</a><br>\n";
+    }
+    function addSep(){
+        $this->menuSubItems[] = "<hr class=\"{$this->aclass}\">\n";
     }
     function html(){
         $b = '';
@@ -32,11 +35,14 @@ class menu {
         $this->aclass = $aclass;
         $this->menuItems = array();
     }
-    function addItem($key,$label,$link = 'javascript:void(0)'){
+    function addMenu($key,$label,$link = 'javascript:void(0)'){
         $this->menuItems[$key] = new menuItem($this->liclass,$this->aclass,$label,$link);
     }
-    function addSubItem($key,$label,$link = 'javascript:void(0)'){
-        $this->menuItems[$key]->addSubItem($label,$link);
+    function addItem($key,$label,$link = 'javascript:void(0)'){
+        $this->menuItems[$key]->addItem($label,$link);
+    }
+function addSep($key /* ,$label,$link = 'javascript:void(0)' */){
+        $this->menuItems[$key]->addSep();
     }
     function html(){
         $b = '<li class="dropdown nav">';
@@ -61,31 +67,37 @@ class traqrDoc extends htmlDoc {
 
      function menu(){
          $m = new menu('nav','navlink');
-         $m->addItem('index','Home','/Index.php');
-         $m->addSubItem('index','About','/About/Index.php');
-         if ( authorized()){
-             $m->addItem('admin','Admin','/Admin/Index.php');
-             $m->addSubItem('admin','Gen New QRs','/Admin/GenQR.php');
-             $m->addSubItem('admin','Auth Table','/Admin/authMgmt.php');
-             $m->addSubItem('admin','QR Table','/Admin/qrGenMgmt.php');
-             $m->addSubItem('admin','ID Table','/Admin/IdentifierMgmt.php');
-             $m->addSubItem('admin','Report All','/Admin/ReportAll.php');
-             $m->addSubItem('admin','Report Daily','/Admin/ReportDaily.php');
-             $m->addSubItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');
-
-             $m->addItem('util','Utils/Dev/Tools','/Util/Index.php');
-             $m->addSubItem('util','PHP Info','/Util/phpinfo.php');
-             $m->addSubItem('util','Session Info','/Util/sessionInfo.php');
-             $m->addSubItem('util','DB SChema','/Util/dbSchema.php');
+         $m->addMenu('index','Home','/Index.php');
+         $m->addItem('index','About','/About/Index.php');
+         if ( authorized('TRAQR','admin')){
+             $m->addMenu('admin','Admin','/Admin/Index.php');
+             $m->addItem('admin','Gen New QRs','/Admin/GenQR.php');
+             $m->addSep('admin');
+             $m->addItem('admin','Auth Table','/Admin/authMgmt.php');
+             $m->addItem('admin','QR Table','/Admin/qrGenMgmt.php');
+             $m->addItem('admin','ID Table','/Admin/IdentifierMgmt.php');
+             $m->addSep('admin');
+             $m->addItem('admin','Report All','/Admin/ReportAll.php');
+             $m->addItem('admin','Report Daily','/Admin/ReportDaily.php');
+             $m->addItem('admin','Report Daily (ident)','/Admin/ReportDailyByIdent.php');
+         }
+         if ( authorized('TRAQR','dev')){
+             $m->addMenu('util','Utils/Dev/Tools','/Util/Index.php');
+             $m->addItem('util','PHP Info','/Util/phpinfo.php');
+             $m->addItem('util','Session Info','/Util/sessionInfo.php');
+             $m->addItem('util','DB Schema','/Util/dbSchema.php');
+             $m->addItem('util','DB Backup','/Util/dbBackup.php');
+             $m->addItem('util','Entry Completed','/EntryCompleted.php');
+             $m->addItem('util','Auth Testing','/Util/authTesting.php');
          }
 
          $lm = new menu('nav','navlink');
          if( isset($_SESSION['au_user'])){
-             $lm->addItem('login','User: ' . $_SESSION['au_user'] . ' (' . $_SESSION['au_role'] . ')','');
-             $lm->addSubItem('login','Sign Out','/Logout.php');
+             $lm->addMenu('login','User: ' . $_SESSION['au_user'] . ' (' . $_SESSION['au_role'] . ')','');
+             $lm->addItem('login','Sign Out','/Logout.php');
          }
          else {
-             $lm->addItem('login','Login','/Login.php');
+             $lm->addMenu('login','Login','/Login.php');
          }
         // $linfo =  (isset($_SESSION['au_user'])) ? "Logged in as: " . $_SESSION['au_user'] : "<a href=\"/Login.php\">Login</a>";
     //     $linfo .=  (isset($_SERVER['REMOTE_USER'])) ? "RU: " . $_SERVER['REMOTE_USER'] : " (Login Link)";

@@ -238,3 +238,6 @@ p.entry-completed {
 ul.entry-completed {
     margin-top: 5px;
 }
+.restart {
+    background-color: yellow;
+}

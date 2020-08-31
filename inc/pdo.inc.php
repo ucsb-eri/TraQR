@@ -8,6 +8,9 @@ class pdoCore extends PDO {
         $this->errBuf = '';
         $this->errPrefix = array('fail' => 'FAIL');
         $this->dsn = $dsn;
+        list($type,$file) = explode(":",$this->dsn);
+        $this->pdoType = $type;
+        $this->pdoFile = $file;
         $this->data = array();
         $this->uri = $_SERVER['REQUEST_URI'];
 

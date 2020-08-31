@@ -3,3 +3,4 @@
 config.php
 var/dbs/*.sqlite3*
 var/qrs/*.png
+var/bks/*.gz

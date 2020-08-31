@@ -27,6 +27,7 @@ function defineRelPath($dir){
 }
 // DB needs to be used in conjuntion with REL
 define('DB','/var/dbs/traqr.sqlite3');
+define('BKDIR','/var/bks/');
 define('BASEURL',$_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['SERVER_NAME']);
 
 function getDSN(){
