@@ -63,6 +63,7 @@ class traqrDoc extends htmlDoc {
          $this->css('css/traqr.css');
          $this->css('css/traqr-data.css');
          $this->css('css/nav.css');
+         $this->js('js/scripts.js');
      }
 
      function menu(){
@@ -71,6 +72,7 @@ class traqrDoc extends htmlDoc {
          $m->addItem('index','About','/About/Index.php');
          if ( authorized('TRAQR','admin')){
              $m->addMenu('admin','Admin','/Admin/Index.php');
+             $m->addItem('admin','Initial Identity','/Admin/InitialIdentityEntry.php');
              $m->addItem('admin','Gen New QRs','/Admin/GenQR.php');
              $m->addSep('admin');
              $m->addItem('admin','Auth Table','/Admin/authMgmt.php');

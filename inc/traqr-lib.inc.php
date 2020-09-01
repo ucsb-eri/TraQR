@@ -19,6 +19,14 @@ class traQRMgr {
         $b .= '<input type="text" size="' . $size . '" id="' . $name . '" name="' . $name . '" value="' . $val . '" placeholder="' . $desc . '">';
         return $b;
     }
+    function identityFormInput($size,$name,$desc,$value = ''){
+        $b = '';
+        $globalVal = ( array_key_exists($name,$GLOBALS)) ? "{$GLOBALS[$name]}" : "";
+        $val =  ( $value != '') ? $value : "$globalVal" ;
+        //$val = "Fake Value";
+        $b .= '<input type="text" size="' . $size . '" id="' . $name . '" name="' . $name . '" value="' . $val . '" placeholder="' . $desc . '">';
+        return $b;
+    }
     function checkPostForVars(){
         $f = 'Identifier';
         if(array_key_exists($f,$_POST)){
@@ -34,6 +42,72 @@ class traQRMgr {
                 $this->regenData[$f] = filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING);
             }
         }
+    }
+    function identityFormInfo(){
+        $b = '';
+        $b .= "Identifier Order Preference:<ul>
+        <li>UCSBNetID based email: ie: &lt;UCSBNetID@ucsb.edu&gt;</li>
+        <li>Email: ie: user@gmail.com</li>
+        <li>Contractor-firstnameLastname (in title case): ie: ADT-JoeGaucho</li>
+        <li>firstnameLastname (in title case)</li>
+        <li>Phone: ie: 805-012-4567</li>
+        </ul>
+        ";
+        return $b;
+    }
+    function identityForm(){
+        // print_pre($_POST,"POST vars");
+        // print_pre($this->regenData,"Internal Regen Data");
+        $rowsPerCol = 2;
+        $rowCntr = 0;
+        // currently no plan to support regenData type setup here, data is coming from/to multiple tables
+        // if (isset($this->regenData['Identifier'])){
+        //     $GLOBALS['Identfier'] = $this->regenData['Identifier'];
+        //     foreach($this->buildingEntries as $num){
+        //         if (isset($this->regenData['Building'.$num]))  $GLOBALS['Building'.$num] = $this->regenData['Building'.$num];
+        //         if (isset($this->regenData['Room'.$num]))      $GLOBALS['Room'.$num]     = $this->regenData['Room'.$num];
+        //
+        //     }
+        // }
+        $b = '';
+        $b .= "<button onclick=\"hideShowIdentityForm()\">Hide/Show Form</button>\n";
+        $b .= "<div id=\"IdentityFormDiv\"><!-- begin IdentityFormDiv -->\n";
+        $b .= $this->identityFormInfo();
+
+        $b .= '<div class="qr-id-form-container">' . NL;
+        $b .= '  <div class="qr-id-form-col">' . NL;
+        $b .= '<form class="qr-id-form-form" method="POST">' . NL;
+        $b .= $this->identityFormInput(24,'id_ident','Identifier (email preferred)');
+        $b .= "<br>\n";
+        $b .= $this->identityFormInput(24,'id_name_first','First Name');
+        $b .= "<br>\n";
+        $b .= $this->identityFormInput(24,'id_name_last','Last Name');
+        $b .= "<br>\n";
+        $b .= $this->identityFormInput(24,'id_email','email address');
+        $b .= "<br>\n";
+        $b .= $this->identityFormInput(24,'id_UCSBNetID','UCSBNetID');
+        $b .= "<br>\n";
+        $b .= $this->identityFormInput(24,'id_phone','Phone number');
+        $b .= '<br>' . NL;
+        $b .= $this->identityFormInput(24,'id_extra','Notes');
+        $b .= '<br>' . NL;
+        $rowCntr++;
+
+        foreach( $this->buildingEntries as $num){
+            $b .= $this->identityFormInput(14,'Building'.$num,'Building Name'.$num);
+            $b .= $this->identityFormInput(8,'Room'.$num,'Room #'.$num);
+            $b .= "<br>\n";
+        }
+
+        $b .= '<input class="qr-id-form-submit" type="submit" id="submit" value="Generate Initial Identity Records" name="Generate Initial Identity Records" />'  . NL ;
+        $b .= '</form>' . NL;
+        $b .= '  </div><!-- qr-form-col -->' . NL;
+        $b .= '</div><!-- qr-form-container -->' . NL;
+        $b .= "<br>" . NL;
+        $b .= "</div><!-- end IdentityFormDiv -->\n";
+
+        print $b;
+        return $b;
     }
     function htmlForm(){
         // print_pre($_POST,"POST vars");

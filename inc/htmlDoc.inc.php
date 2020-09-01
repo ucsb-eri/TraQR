@@ -135,7 +135,7 @@ class htmlDoc {
     }
     function js($file){
         //$this->head[] = "<script language='JavaScript' src='$file'></script>";
-        $this->head[] = "<script src=\"$file\"></script>";
+        $this->head[] = "<script src=\"" . REL . "$file\"></script>";
     }
     function head($line){
         $this->head[] = $line;

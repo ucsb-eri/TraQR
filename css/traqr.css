@@ -75,7 +75,22 @@ em {
 }
 .qr-form-col {
     display: inline-block;
-
+}
+.qr-id-form-container {
+    display: block;
+}
+.qr-id-form-col {
+    display: block;
+}
+.qr-id-form-form {
+}
+.qr-id-form-form input {
+    font-size: 150%;
+    display: inline-block;
+}
+.qr-id-form-submit {
+    font-size: 150%;
+    background-color: #6f6;
 }
 table.qr-data-table {
     border-collapse: collapse;
@@ -240,4 +255,7 @@ ul.entry-completed {
 }
 .restart {
     background-color: yellow;
+}
+#IdentityFormDiv {
+    display: block;
 }
