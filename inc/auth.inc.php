@@ -20,11 +20,12 @@ $authMasks = array(
 );
 ////////////////////////////////////////////////////////////////////////////////
 // Note, the PHP_AUTH_USER is not set unless you are within one of the privileged directories...
-function authorized($mode = 'IP',$authLevelRequired = ''){
+function authorized($mode = 'DEFAULT',$authLevelRequired = 'admin'){
     switch ($mode) {
         case 'IP':
             return authorizedByIP();
             break;
+        case 'DEFAULT':
         case 'TRAQR':
             return authorizedByTraqrInternal($authLevelRequired);
             break;
@@ -35,7 +36,7 @@ function authorized($mode = 'IP',$authLevelRequired = ''){
     return false;
 }
 ////////////////////////////////////////////////////////////////////////////////
-function authorizedByIP(){
+function authorizedByIP($authLevelRequired = ''){
     foreach($GLOBALS['authorizedIPs'] as $aip){
         //print "aIP: $aip, thisIP: {$_SERVER['REMOTE_ADDR']}<br>";
         if ($aip == $_SERVER['REMOTE_ADDR']) {
@@ -52,7 +53,19 @@ function authorizedByTraqrInternal($authLevelRequired = ''){
     //print "authLevelRequired: $authLevelRequired<br>\n";
     if ($authLevelRequired == '') return false;
 
-    if (! isset($_SESSION['au_role'])) return false;
+    // check against hardwired IPs first, but need to cycle through
+    if (array_key_exists('authorizedIPs',$GLOBALS)){
+        foreach( array_keys($GLOBALS['authorizedIPs']) as $role){
+            if ( ($authMasks[$role] & $authFlags[$authLevelRequired]) > 0 ){
+                // print_pre($GLOBALS['authorizedIPs'][$role],"checking IP list for {$_SERVER['REMOTE_ADDR']} for required auth level: $authLevelRequired");
+                if( in_array($_SERVER['REMOTE_ADDR'],$GLOBALS['authorizedIPs'][$role])) return true;
+            }
+        }
+    }
+
+    // now check against any login role
+    if (! isset($_SESSION)) return false;
+    if (! array_key_exists('au_role',$_SESSION)) return false;
     $role = $_SESSION['au_role'];
     if (! array_key_exists($role,$authFlags))              return false;   // have an invalid role designation
     if (! array_key_exists($authLevelRequired,$authFlags)) return false;   // have an invalid role designation

@@ -259,3 +259,19 @@ ul.entry-completed {
 #IdentityFormDiv {
     display: block;
 }
+tr.mod0 {
+    background-color: #ddf;
+}
+tr.mod1 {
+    /* light green */
+    background-color: #dfd;
+}
+tr.mod2 {
+    background-color: #fdd;
+}
+tr.mod3 {
+    background-color: none;
+}
+tr.mod4 {
+    background-color: #ffd;
+}

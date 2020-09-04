@@ -65,7 +65,7 @@ class traqrDoc extends htmlDoc {
          $this->css('css/nav.css');
          $this->js('js/scripts.js');
      }
-
+     ///////////////////////////////////////////////////////////////////////////
      function menu(){
          $m = new menu('nav','navlink');
          $m->addMenu('index','Home','/Index.php');
@@ -111,6 +111,7 @@ class traqrDoc extends htmlDoc {
 
          return "<nav>\n" . $m->html() . $l . "</nav>\n";
      }
+     ///////////////////////////////////////////////////////////////////////////
      function navHTML(){
          $b = '';
          $b .= "<header>\n";

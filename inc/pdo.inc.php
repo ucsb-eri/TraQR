@@ -325,9 +325,12 @@ class pdoCore extends PDO {
         }
         $b .= '</tr>' . NL;
         $last = array();
+        $rowcntr = 0;
         foreach($hash as $r){
+            $rowcntr++;
+            $modclass = "mod" . ($rowcntr % 5);
             $status = 'NA';
-            $classStr = $this->buildTrClassString('.tr',$r,'qr-data-table-row');
+            $classStr = $this->buildTrClassString('.tr',$r,'qr-data-table-row ' . $modclass);
             //$rowclass = 'qr-data-table-row';
             //    $rowclass .= ( isset($r['@row-class']) ) ? " ".$r['@row-class'] : '' ;
             $b .= "<tr class=\"$classStr\">" . NL;

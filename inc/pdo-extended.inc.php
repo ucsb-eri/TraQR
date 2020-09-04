@@ -115,10 +115,11 @@ class traQRpdo extends pdoCore {
         $q = "CREATE TABLE IF NOT EXISTS auth (
         au_id          INTEGER PRIMARY KEY,
         au_user        TEXT,                                     -- user
-        au_pass        TEXT,                                     -- md5 encoded pass
+        au_md5         TEXT,                                     -- md5 encoded pass
+        au_hash        TEXT,                                     -- encoded pass hash (from password_hash)
         au_role        TEXT,                                     -- role
         au_extra       TEXT,                                     -- extra text field for possible use later
-        UNIQUE(au_user,au_pass) ON CONFLICT IGNORE
+        UNIQUE(au_user,au_md5) ON CONFLICT IGNORE
         );";
         //print_pre($q,"query: $q");
         $this->exec($q);
@@ -692,11 +693,29 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $this->data[$f] = preg_replace('/[^a-zA-Z0-9]/','',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
 
             $f = 'password';
-            $this->data['au_pass'] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+            $uepw = str_replace('+','.',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+            // print "POSTVAL: {$_POST[$f]}, UEPW: $uepw<br>\n";
+
+            switch ('blowfish') {
+                case 'blowfish':
+                    $salt = substr(str_replace('+','.', base64_encode(pack('N4', mt_rand(), mt_rand(), mt_rand(), mt_rand()))), 0, 22);
+                    $param = '$'.implode('$',array('2y',str_pad(11,2,"0",STR_PAD_LEFT),$salt)).'$';
+                    break;
+                case 'sha-512':
+                    $salt = substr(str_replace('+','.', base64_encode(pack('N4', mt_rand(), mt_rand(), mt_rand(), mt_rand()))), 0, 16);
+                    $param = '$'.implode('$',array('6',"rounds=6000",$salt)).'$';
+                    break;
+            }
+            //$this->data['au_hash'] = crypt($uepw,$param);
+            $this->data['au_hash'] = password_hash($uepw,PASSWORD_DEFAULT);
+            // print "crypt salt params: $param<br>\n";
+            // print "crypt value:       {$this->data['au_hash']}<br>\n";
+
+            $this->data['au_md5'] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
 
             // need to insert data
             $b .= "Inserting new user<br>";
-            $this->q("INSERT OR REPLACE INTO auth (au_user,au_pass,au_role) VALUES (?,?,?);",array($this->data['au_user'],$this->data['au_pass'],$this->data['au_role']));
+            $this->q("INSERT OR REPLACE INTO auth (au_user,au_md5,au_hash,au_role) VALUES (?,?,?,?);",array($this->data['au_user'],$this->data['au_md5'],$this->data['au_hash'],$this->data['au_role']));
         }
 
         // print_pre($_POST,__METHOD__ . ": POST Vars");
@@ -726,7 +745,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $b .= $this->rowEdit($table,$rowkey,array('au_role'));
         }
         $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
-        $flds = array('au_id','au_user','au_pass','au_role');
+        $flds = array('au_id','au_user','au_md5','au_hash','au_role');
         if( authorized('TRAQR','root')) {
             array_push($flds,'edit');
             array_push($flds,'delete');
@@ -938,7 +957,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
         }
         $b .= "</table>\n";
-        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Exit</strong></p>\n";
+        $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Complete</strong></p>\n";
         $b .= "</div>\n";
         $b .= "</a>\n";
         //print_pre($data,"scanConfirmationData");

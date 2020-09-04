@@ -9,6 +9,7 @@ class traQRMgr {
         $this->buildingEntries = range(1,$numRooms);
         // this data is for if we are sending post data from another page to regenerate
         // an already existing QR
+        $this->idData = array();
         $this->regenData = array();
         $this->checkPostForVars();
     }
@@ -21,12 +22,14 @@ class traQRMgr {
     }
     function identityFormInput($size,$name,$desc,$value = ''){
         $b = '';
-        $globalVal = ( array_key_exists($name,$GLOBALS)) ? "{$GLOBALS[$name]}" : "";
+        $globalVal = ( array_key_exists($name,$GLOBALS)) ? "{$GLOBALS[$name]}" : '';
+        $globalVal = ( array_key_exists($name,$this->idData) && $globalVal == '') ? "{$this->idData[$name]}" : '';
         $val =  ( $value != '') ? $value : "$globalVal" ;
         //$val = "Fake Value";
         $b .= '<input type="text" size="' . $size . '" id="' . $name . '" name="' . $name . '" value="' . $val . '" placeholder="' . $desc . '">';
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function checkPostForVars(){
         $f = 'Identifier';
         if(array_key_exists($f,$_POST)){
@@ -43,6 +46,7 @@ class traQRMgr {
             }
         }
     }
+    ////////////////////////////////////////////////////////////////////////////
     function identityFormInfo(){
         $b = '';
         $b .= "Identifier Order Preference:<ul>
@@ -55,6 +59,40 @@ class traQRMgr {
         ";
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
+    function sanitizePost(&$destArray = array(),$keys = array(),$filter_input_type){
+        foreach($keys as $key){
+            $destArray[$key] = trim(filter_input(INPUT_POST,$key,$filter_input_type));
+        }
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function identityFormPostCheck(){
+        // want to look to see if we have a post for the identity form
+        if( ! array_key_exists('id_ident',     $_POST)) return false;
+        if( ! array_key_exists('id_name_first',$_POST)) return false;
+        if( ! array_key_exists('id_name_last', $_POST)) return false;
+
+        //print_pre($_POST,__METHOD__ . ": POST vars");
+        $strKeys = array();
+        $strKeys[] = 'id_ident';
+        $strKeys[] = 'id_name_first';
+        $strKeys[] = 'id_name_last';
+        $strKeys[] = 'id_UCSBNetID';
+        $strKeys[] = 'id_phone';
+        $strKeys[] = 'id_extra';
+        foreach( $this->buildingEntries as $num){
+            $strKeys[] = 'Building' . $num;
+            $strKeys[] = 'Room' . $num;
+        }
+        //$this->sanitizePost($this->idData,array('id_ident','id_name_first','id_name_last','id_UCSBNetID','id_phone','id_extra'),FILTER_SANITIZE_STRING);
+        $this->sanitizePost($this->idData,array('id_email'),FILTER_SANITIZE_EMAIL);
+        $this->sanitizePost($this->idData,$strKeys,FILTER_SANITIZE_STRING);
+        //print_pre($this->idData,__METHOD__ . ': idData');
+
+        // idInfo: Figure out if we are doing an insert or an update....
+        // qrInfo: Since an entry here is a unique triplet, we can simply do an insert or ignore.
+    }
+    ////////////////////////////////////////////////////////////////////////////
     function identityForm(){
         // print_pre($_POST,"POST vars");
         // print_pre($this->regenData,"Internal Regen Data");
@@ -72,6 +110,7 @@ class traQRMgr {
         $b = '';
         $b .= "<button onclick=\"hideShowIdentityForm()\">Hide/Show Form</button>\n";
         $b .= "<div id=\"IdentityFormDiv\"><!-- begin IdentityFormDiv -->\n";
+        $b .= $this->identityFormPostCheck();
         $b .= $this->identityFormInfo();
 
         $b .= '<div class="qr-id-form-container">' . NL;
@@ -109,6 +148,7 @@ class traQRMgr {
         print $b;
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function htmlForm(){
         // print_pre($_POST,"POST vars");
         // print_pre($this->regenData,"Internal Regen Data");
@@ -153,6 +193,7 @@ class traQRMgr {
     ////////////////////////////////////////////////////////////////////////////
     // This is checking for a form submission to reGenerate some QR codes
     ////////////////////////////////////////////////////////////////////////////
+    // not sure if this is actually used at this point...
     function checkPost(){
         $toCheck = array();
         $toCheck[] = 'Identifier';
