@@ -29,7 +29,7 @@
             <li>Copy appropriate helper line (list of fields) on dbSchema page</li>
             <li>Via CLI:
                 <ul>
-                    <li>INSERT INTO &lt;tablename&gt; SELECT (list of field names with extra '&lt;DEFAULT_VALUE&gt;', inserted at correct location) FROM &lt;tablename&gt;Prev</li>
+                    <li>INSERT INTO &lt;tablename&gt; (comma,separated,list,of,fields) SELECT &lt;comma,separated,list,of,fields,with,extra,'&lt;DEFAULT_VALUE&gt;',inserted,at,correct,location&gt; FROM &lt;tablename&gt;Prev</li>
                     <li>SELECT * FROM &lt;tablename&gt;;</li>
                     <li>.quit</li>
                 </ul>

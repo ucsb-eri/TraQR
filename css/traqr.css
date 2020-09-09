@@ -155,51 +155,73 @@ table.confirmation tr td {
     background-color: #fb8;
 }
 .entry-confirmation {
-    padding: 10px;
-    margin: 10px;
-    border: 3px solid #444;
-    border-radius: 8px;
+    /*
+    padding: 20px;
+    margin: 25px;
+    border: 8px solid #444;
+    border-radius: 30px;
+    text-align: center;
+    */
 }
 .entry-confirmation-link {
     text-decoration: none;
 }
+.big-button {
+    border: 8px solid #888;
+    border-radius: 30px;
+    padding: 20px;
+    margin: 25px;
+    display: block;
+    box-shadow: 15px 15px 5px 5px #888888;
+    text-align: center;
+    text-decoration: none;
+}
 .confirm-entry {
-    border: 4px solid #444;
-    border-radius: 12px;
+    /*
+    border: 8px solid #444;
+    border-radius: 30px;
+    padding: 20px;
+    display: block;
+    text-align: center;
+    box-shadow: 15px 15px 5px 5px #888888;
+    margin: 25px;
+    text-decoration: none;
+    */
     background-color: cyan;
     font-size: 500%;
     font-weight: bold;
-    text-decoration: none;
-    padding: 10px;
-    display: block;
-    text-align: center;
-    margin: 15px;
     padding-top: 100px;
     padding-bottom: 100px;
 }
 .skip-entry {
-    border: 4px solid #444;
-    border-radius: 12px;
+    /*
+    border: 8px solid #444;
+    border-radius: 30px;
+    padding: 20px;
+    margin: 25px;
+    box-shadow: 15px 15px 5px 5px #888888;
+    display: block;
+    text-decoration: none;
+    text-align: center;
+    */
     background-color: cyan;
     font-size: 250%;
     font-weight: bold;
-    text-decoration: none;
+}
+.invalid-entry {
+    /*
+    border: 4px solid #444;
+    border-radius: 12px;
     padding: 10px;
     margin: 15px;
     display: block;
     text-align: center;
-}
-.invalid-entry {
-    border: 4px solid #444;
-    border-radius: 12px;
+    box-shadow: 15px 15px 5px 5px #888888;
+    text-decoration: none;
+    */
     background-color: #f66;
     font-size: 250%;
     font-weight: bold;
-    text-decoration: none;
-    padding: 10px;
-    margin: 15px;
-    display: block;
-    text-align: center;
 }
 .confirmation-finish {
     font-size: 2.2em;
@@ -229,12 +251,24 @@ table.confirmation tr td {
 }
 .delete-button {
     background-color: #f66;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 .edit-button {
     background-color: #6f6;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 .regen-button {
     background-color: #6ff;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    padding-top: 1px;
+    padding-bottom: 1px;
 }
 .generic-display-table {
     border: 2px solid #aaa;
@@ -274,4 +308,20 @@ tr.mod3 {
 }
 tr.mod4 {
     background-color: #ffd;
+}
+fieldset.identity-fs {
+    display: block;
+    display: inline-block;
+    background-color: yellow;
+    vertical-align: top;
+}
+.sort-by {
+    width: 100%;
+    background-color: yellow;
+    border: none;
+    font-weight: bold;
+    font-size: 100%;
+}
+.edit-row {
+    font-size: 120%;
 }

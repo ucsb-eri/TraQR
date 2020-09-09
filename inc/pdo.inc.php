@@ -234,6 +234,8 @@ class pdoCore extends PDO {
         return (isset($r[0])) ? $r[0] : '';
     }
     ////////////////////////////////////////////////////////////////////////////////
+    // Where clause generated from a single variable - a hashed array
+    ////////////////////////////////////////////////////////////////////////////////
     function generateAndedWhereClause($where = array()){
         # generate where clause
         $data = array();
@@ -321,7 +323,9 @@ class pdoCore extends PDO {
         $b .= '<table class="qr-data-table">' . NL;
         $b .= '<tr class="qr-data-table-header-row">' . NL;
         foreach($displayFields as $f){
-            $b .= "<th class=\"qr-data-table-td $f\">$f</th>\n";
+            $fd = "<form method=\"post\"><button type=\"submit\" class=\"sort-by\" name=\"sort-by\" value=\"$f\">";
+            $fd .= $f . '</button>' . NL;
+            $b .= "<th class=\"qr-data-table-td $f\">$fd</th>\n";
         }
         $b .= '</tr>' . NL;
         $last = array();
@@ -345,6 +349,102 @@ class pdoCore extends PDO {
         }
         $b .= '</table>' . NL;
         return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////////
+    // Where clause generated from a single variable - a hashed array
+    ////////////////////////////////////////////////////////////////////////////////
+    function andedWhere($valHash = array(),$whereKeys = null){
+        $out = array('qstr' => '','data' => array());
+        if ($whereKeys == null) return $out;
+        elseif (is_string($whereKeys)) $keys = array($whereKeys);
+        elseif (is_array($whereKeys)) $keys = $whereKeys;
+        else return $out;
+
+        if ( ! is_array($valHash)) return array('qstr' => '','data' => '');;
+
+        # generate where clause
+        //$data = array();
+        if (count($keys) > 0){
+            $kelem = array();
+            $velem = array();
+            foreach($keys as $k){
+                $kelem[] = "$k=?";
+                $out['data'][] = $valHash[$k];
+            }
+            $out['qstr'] = " WHERE (" . implode(" AND ",$kelem) . ')';
+        }
+        else {
+            $out['qstr'] = "";
+        }
+        return $out;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    // Should we require that the where values be in the data?
+    ////////////////////////////////////////////////////////////////////////////
+    function update($table,$data = array(),$keys = null,$whereKeys = array()){
+        if ( ! is_array($whereKeys)) return false;
+        if ( $keys == null ) $keys = array_keys($data);
+
+        $varr = array();
+        //$harr = array();
+        //$uarr = array();
+        foreach($keys as $key){
+            $varr[] = $data[$key];
+            $harr[] = "$key=?";
+            //$uarr[] = "$key=excluded.$key";
+        }
+
+        // Need to build WHERE clause, if whereKey and whereVal are arrays we assume AND
+        $whereA = $this->andedWhere($data,$whereKeys);
+        foreach($whereA['data'] as $v) $varr[] = $v;
+
+        $kstr = implode(',',$keys);
+        $hstr = implode(',',$harr);
+        //$ustr = implode(',',$uarr);
+        $this->q("UPDATE  $table SET $hstr {$whereA['qstr']};",$varr);
+
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function insert($table,$data = array(),$keys = null){
+        if ( $keys == null ) $keys = array_keys($data);
+
+        $varr = array();
+        $harr = array();
+        //$uarr = array();
+        foreach($keys as $key){
+            $varr[] = $data[$key];
+            $harr[] = '?';
+            //$uarr[] = "$key=excluded.$key";
+        }
+        $kstr = implode(',',$keys);
+        $hstr = implode(',',$harr);
+        //$ustr = implode(',',$uarr);
+        $this->q("INSERT INTO $table ($kstr) VALUES ($hstr);",$varr);
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    // Upsert is non-standard sql adopted by postgres and sqlite
+    // Basically if an insert violated a UNIQUE constraint it turns into an
+    // UPDATE on the row that violates the constraint, so it allows an UPDATE
+    // instead of a REPLACE (which increments rowid)
+    // The only issue to sort out is what order the arguments should be in...
+    ////////////////////////////////////////////////////////////////////////////
+    function upsert($table,$conflictFields = array(),$data = array(),$keys = null){
+        if ( $keys == null ) $keys = array_keys($data);
+        if (is_string($conflictFields)) $conflictFields = array($conflictFields);
+
+        $cstr = implode(',',$conflictFields);
+        $varr = array();
+        $harr = array();
+        $uarr = array();
+        foreach($keys as $key){
+            $varr[] = $data[$key];
+            $harr[] = '?';
+            $uarr[] = "$key=excluded.$key";
+        }
+        $kstr = implode(',',$keys);
+        $hstr = implode(',',$harr);
+        $ustr = implode(',',$uarr);
+        $this->q("INSERT INTO $table ($kstr) VALUES ($hstr) ON CONFLICT($cstr) DO UPDATE SET $ustr;",$varr);
     }
 }
 ?>

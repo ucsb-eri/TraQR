@@ -31,7 +31,7 @@ class traqrAuth {
     }
     ///////////////////////////////////////////////////////////////////////////
     function loginSessionDataValidates(){
-        $entries = $this->db->getKeyedHash('au_id',"SELECT * FROM auth WHERE au_user = ? AND au_md5 = ?;",array($_SESSION['au_user'],$_SESSION['au_md5']));
+        $entries = $this->db->getKeyedHash('au_id',"SELECT * FROM auth WHERE au_user = ?;",array($_SESSION['au_user']));
         if (count($entries) > 0){
             $pwe = array_shift($entries);
             foreach($this->dbFields as $f){
@@ -62,42 +62,11 @@ class traqrAuth {
         }
         else return;
 
-        //         $f = 'au_md5';
-        //         if ( array_key_exists($f,$_POST)){
-        //             $this->data[$f] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
-        // //            $this->data[$f] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
-        //         }
-        //         else return;
-                // $f = 'passwd';
         $f = 'password';
         if ( array_key_exists($f,$_POST)){
             $uepw = str_replace('+','.',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
         }
         else return;
-
-        //print_pre($this->data,__CLASS__ . '::' . __METHOD__ . " data values");
-
-    // //    $dbhash = $this->db->fetchValNew("SELECT au_hash FROM auth WHERE au_user = ?;",array($this->data['au_user']));
-    //     $entries = $this->db->getKeyedHash('au_id',"SELECT * FROM auth WHERE au_user = ? AND au_md5 = ?;",array($this->data['au_user'],$this->data['au_md5']));
-    //     if( count($entries) > 0){
-    //         $pwe = array_shift($entries);
-    //     }
-    //     // if empty, then invalid user
-    //     if( $hash == ''){
-    //         $valid = FALSE;
-    //     }
-    //     else {
-    //         $checkhash = crypt($passwd,$dbhash);
-    //         if( $checkhash == $dbhash ){
-    //             $valid = TRUE;
-    //             //$this->setSessionAuth(array('au_user' => $this->data['au_user'],'au_hash' => "$checkhash"));
-    //         }
-    //         else {
-    //             $valid = FALSE;
-    //         }
-    //     }
-    //     if ( $valid )   $this->setSessionAuth(array('au_user' => $this->data['au_user'],'au_hash' => "$checkhash"));
-    //     else            $this->unsetSessionAuth();
 
         // so this should only happen if we have a POST submission
         if( array_key_exists('au_user',$this->data)){
@@ -128,27 +97,6 @@ class traqrAuth {
         }
         else   $this->unsetSessionAuth();
 
-
-
-
-        // so this should only happen if we have a POST submission
-        // if( array_key_exists('au_user',$this->data) && array_key_exists('au_md5',$this->data)){
-        //     $entries = $this->db->getKeyedHash('au_id',"SELECT * FROM auth WHERE au_user = ? AND au_md5 = ?;",array($this->data['au_user'],$this->data['au_md5']));
-        //     if( count($entries) > 0){
-        //         //print_pre($entries,"auth entries");
-        //         $pwe = array_shift($entries);
-        //         //print_pre($pwe,"auth entry");
-        //         $valid = $this->setSessionAuth($pwe);
-        //         // session_write_close();   // we may need to do this as the script may be ending prematurely by header call.
-        //         // header("Location: " . "/Login.php");
-        //         $valid = TRUE;
-        //     }
-        //     else $valid = FALSE;
-        //
-        //     if( $valid ) $this->setSessionAuth($pwe);
-        //     else $this->unsetSessionAuth();
-        // }
-        // else   $this->unsetSessionAuth();
     }
     ///////////////////////////////////////////////////////////////////////////
     function loginForm(){

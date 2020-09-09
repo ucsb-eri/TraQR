@@ -39,3 +39,9 @@ The styles here are specific to the db data, typically coloring or alignment onl
 td.qr_uuid, td.sd_uuid, td.au_md5, td.au_crypt {
     font-family: "Lucida Console", Monaco, monospace;
 }
+.# {
+    background-color: yellow;
+}
+.rowcnt {
+    background-color: yellow;
+}

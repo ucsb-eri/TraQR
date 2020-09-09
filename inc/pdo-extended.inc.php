@@ -93,6 +93,7 @@ class traQRpdo extends pdoCore {
         id_phone       TEXT,                                     -- phone number
         id_email       TEXT,                                     -- email address
         id_UCSBNetID   TEXT,                                     -- ucsbnetid (if available)
+        id_dept        TEXT,                                     -- department
         id_extra       TEXT,                                     -- extra text field for possible use later
         UNIQUE(id_ident) ON CONFLICT IGNORE
         );";
@@ -115,11 +116,10 @@ class traQRpdo extends pdoCore {
         $q = "CREATE TABLE IF NOT EXISTS auth (
         au_id          INTEGER PRIMARY KEY,
         au_user        TEXT,                                     -- user
-        au_md5         TEXT,                                     -- md5 encoded pass
         au_hash        TEXT,                                     -- encoded pass hash (from password_hash)
         au_role        TEXT,                                     -- role
         au_extra       TEXT,                                     -- extra text field for possible use later
-        UNIQUE(au_user,au_md5) ON CONFLICT IGNORE
+        UNIQUE(au_user) ON CONFLICT IGNORE
         );";
         //print_pre($q,"query: $q");
         $this->exec($q);
@@ -309,8 +309,8 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     ////////////////////////////////////////////////////////////////////////////
     function scanConfirm($url,$ident,$building,$room){
         $b = '';
-        $b .= "<a class=\"confirm-entry\" href=\"$url\">";
-        $b .= "Confirm " . $this->data['sd_mode'] . " Data<br>";
+        $b .= "<a class=\"big-button confirm-entry\" href=\"$url\">";
+        $b .= "Confirm " . $this->data['sd_mode'] . " for<br>";
         $b .=  "$ident<br>\n";
         $b .=  "$building $room<br>\n";
         $b .= "</a>\n";
@@ -570,7 +570,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     // table is the tablename to delete a row from
     // rowid is the field that contains the rowid which will be used to pick a specific row
     ////////////////////////////////////////////////////////////////////////////
-    function rowEdit($table,$rowkey,$eFields = array()){
+    function rowEdit($table,$rowkey,$eFields = array(),$displayOnlyFields = array()){
         $b = '';
         //print_pre($_POST,"POST Vars");
         if( isset($_POST['EDIT_ROW'])) {
@@ -615,11 +615,14 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
 
             // This is the confirming form for the top of the page
             $b .= "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\">";
+            foreach($displayOnlyFields as $f){
+                $b .= "&nbsp;" . $h[$f] . "&nbsp;";
+            }
             foreach($eFields as $f){
                 //print "eField: $f<br>\n";
                  if( array_key_exists($f,$h)) {
                      //print "Found entry in hash for: $f";
-                     $b .= "<input type=\"text\" name=\"$f\" value=\"$h[$f]\" size=\"16\" placeholder=\"$f\"></input>\n";
+                     $b .= "<input class=\"edit-row\" type=\"text\" name=\"$f\" value=\"$h[$f]\" size=\"16\" placeholder=\"$f\"></input>\n";
                  }
             }
             $b .= "<br>\n";
@@ -696,26 +699,16 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $uepw = str_replace('+','.',trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
             // print "POSTVAL: {$_POST[$f]}, UEPW: $uepw<br>\n";
 
-            switch ('blowfish') {
-                case 'blowfish':
-                    $salt = substr(str_replace('+','.', base64_encode(pack('N4', mt_rand(), mt_rand(), mt_rand(), mt_rand()))), 0, 22);
-                    $param = '$'.implode('$',array('2y',str_pad(11,2,"0",STR_PAD_LEFT),$salt)).'$';
-                    break;
-                case 'sha-512':
-                    $salt = substr(str_replace('+','.', base64_encode(pack('N4', mt_rand(), mt_rand(), mt_rand(), mt_rand()))), 0, 16);
-                    $param = '$'.implode('$',array('6',"rounds=6000",$salt)).'$';
-                    break;
-            }
-            //$this->data['au_hash'] = crypt($uepw,$param);
             $this->data['au_hash'] = password_hash($uepw,PASSWORD_DEFAULT);
             // print "crypt salt params: $param<br>\n";
             // print "crypt value:       {$this->data['au_hash']}<br>\n";
 
-            $this->data['au_md5'] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
+            //$this->data['au_md5'] = md5(trim(filter_input(INPUT_POST,$f,FILTER_SANITIZE_STRING)));
 
             // need to insert data
             $b .= "Inserting new user<br>";
-            $this->q("INSERT OR REPLACE INTO auth (au_user,au_md5,au_hash,au_role) VALUES (?,?,?,?);",array($this->data['au_user'],$this->data['au_md5'],$this->data['au_hash'],$this->data['au_role']));
+            $this->upsert('auth','au_user',$this->data,array('au_user','au_hash','au_role'));
+            //$this->q("INSERT OR REPLACE INTO auth (au_user,au_hash,au_role) VALUES (?,?,?);",array($this->data['au_user'],$this->data['au_hash'],$this->data['au_role']));
         }
 
         // print_pre($_POST,__METHOD__ . ": POST Vars");
@@ -731,6 +724,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= "<input type=\"password\" name=\"password\" placeholder=\"Password\" value=\"\" size=\"24\">\n";
         $b .= $this->formSelect('New_User','au_role',array_keys($authFlags),$currVals['au_role']);
         $b .= "<input type=\"submit\" name=\"NEW_USER\"  value=\"Add User\">\n";
+        $b .= "(can also be used to update existing user already in table below)\n";
         $b .= "</form>\n";
         return $b;
     }
@@ -745,7 +739,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $b .= $this->rowEdit($table,$rowkey,array('au_role'));
         }
         $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
-        $flds = array('au_id','au_user','au_md5','au_hash','au_role');
+        $flds = array('au_id','au_user','au_hash','au_role');
         if( authorized('TRAQR','root')) {
             array_push($flds,'edit');
             array_push($flds,'delete');
@@ -761,14 +755,42 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         print $b;
     }
     ////////////////////////////////////////////////////////////////////////////
+    function columnSortBy($table){
+        if (array_key_exists('sort-by',$_POST)){
+            //print_pre($_POST,__METHOD__ . ': Sort By Post');
+            $sesssortkey = $table . '.' . 'sort-by-key';
+            $sesssortdir = $table . '.' . 'sort-by-dir';
+            $_SESSION[$sesssortkey] = filter_input(INPUT_POST,'sort-by',FILTER_SANITIZE_STRING);
+            // if sesssortdir exists, toggle it.
+            $_SESSION[$sesssortdir] = (array_key_exists($sesssortdir,$_SESSION)) ? (($_SESSION[$sesssortdir] == 'ASC') ? 'DESC' : 'ASC') : 'ASC';
+            //print_pre($_SESSION,__METHOD__ . ': SESSION vars');
+        }
+        // set session variables for any sorting preference
+        // session variable should be encoded with table and field
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function orderByClause($table,$flds){
+        $b = '';
+        $sesssortkey = $table . '.' . 'sort-by-key';
+        $sesssortdir = $table . '.' . 'sort-by-dir';
+        if( array_key_exists($sesssortkey,$_SESSION) && in_array($_SESSION[$sesssortkey],$flds)) $b .= "ORDER BY {$_SESSION[$sesssortkey]}";
+        if( $b != '' && array_key_exists($sesssortdir,$_SESSION)) $b .= " {$_SESSION[$sesssortdir]}";
+        return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
     function displayIdInfo(){
         $table = 'idInfo';
         $rowkey = 'id_id';
+        $flds = array('id_id','id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_dept','id_extra');
         $b = '';
+        $b .= $this->columnSortBy($table);
         $b .= $this->rowDeletion($table,$rowkey);
-        $b .= $this->rowEdit($table,$rowkey,array('id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra'));
-        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
+        $b .= $this->rowEdit($table,$rowkey,array('id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_dept','id_extra'),array('id_id','id_ident'));
+        $orderBy = $this->orderByClause($table,$flds);
+        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table $orderBy;");
+        $linecntr = 0;
         foreach($hash as &$h){
+            $linecntr++;
             // building a regen form for each row is gonna be more involved than for the qrInfo.
             // here we need to run a query to get all (up to MAX_BUILDING_ROOM_COMBOS) entries for a given identifier.
 
@@ -785,17 +807,21 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $h['regen'] .= "<button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
 
 
-
             $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
             //$h['regen'] = $this->formPostButton('Regen QR','regen-button','REGEN_QR_ROW',$h[$rowkey]);
             $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
 
             $h['locs'] = count($regenHash);
+            $h['#'] = $linecntr;
+            $h['.td-#'] = 'rowcnt';
 
         }
-        $flds = array('id_id','id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra','locs','delete','edit','regen');
         $b .= "<div class=\"generic-display-table\"><!-- begin generic-display-table -->\n";
         $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
+
+        // Add in any synthesized or extra fields not related to the db
+        array_push($flds,'locs','delete','edit','regen','#');
+        array_unshift($flds,'#');
         $b .= $this->genericDisplayTable($hash,$flds);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
@@ -949,14 +975,17 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     function scanConfirmationTable($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$dbFields = array(),$data = array()){
         $b = '';
         $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=DONE\">";
-        $b .= "<div class=\"entry-confirmation $confirmationClass\">\n";
-        $b .= "<strong class=\"confirmation\">$confirmationMessage:</strong><br>\n";
-        $b .= "<table class=\"confirmation\">\n";
-        foreach( $dbFields as $f){
-            if( $f == 'ip' ) continue;
-            if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
-        }
-        $b .= "</table>\n";
+        $b .= "<div class=\"big-button entry-confirmation $confirmationClass\">\n";
+        $b .= "<strong class=\"confirmation\">$confirmationMessage for</strong><br>\n";
+        // Want to get id_ident and maybe building and room, maybe not needed
+        // $b .= "<strong class=\"confirmation\">$confirmationMessage for</strong><br>\n";
+        // $b .= "<strong class=\"confirmation\">$confirmationMessage for</strong><br>\n";
+        // $b .= "<table class=\"confirmation\">\n";
+        // foreach( $dbFields as $f){
+        //     if( $f == 'ip' ) continue;
+        //     if( isset($data[$f]))   $b .= "<tr><td ><strong>" . $f . ":</strong></td><td><em>" . $data[$f] . "</em></td></tr>\n";
+        // }
+        // $b .= "</table>\n";
         $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in Block To Complete</strong></p>\n";
         $b .= "</div>\n";
         $b .= "</a>\n";
@@ -965,7 +994,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     }
     function scanCancel(){
         $b = '';
-        $b .= "<a class=\"skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
+        $b .= "<a class=\"big-button skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
         $b .= "Skip " . $this->data['sd_mode'] . " Confirmation";
         $b .= "</a>\n";
         return $b;
@@ -974,7 +1003,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         // https://traqr.eri.ucsb.edu/Enter.php?sd_mode=BIDIR&sd_uuid=8c195d8439c2bbdcd9aae0a4b7fd82cb&sd_stage=INIT
         $b = '';
         $b .= "<a class=\"entry-confirmation-link\" href=\"Enter.php?sd_mode=BIDIR&sd_uuid={$this->data['sd_uuid']}&sd_stage=INIT\">";
-        $b .= "<div class=\"entry-confirmation problematic\">\n";
+        $b .= "<div class=\"big-button entry-confirmation problematic\">\n";
         $b .= "<strong class=\"confirmation\">TIMEOUT: too much time between scan and confirmation</strong><br>\n";
         $b .= "<p class=\"confirmation-finish\"><strong>Click Anywhere in block to<br>";
         $b .= "Restart Entry/Confirmation Process<br>";
@@ -988,7 +1017,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     function scanConfirmationMessages($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$msgLines = array()){
         $b = '';
         $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=$infoCode\">";
-        $b .= "<div class=\"entry-confirmation $confirmationClass\">\n";
+        $b .= "<div class=\"big-button entry-confirmation $confirmationClass\">\n";
         $b .= "<strong class=\"confirmation\">$confirmationMessage</strong><br>\n";
         foreach( $msgLines as $k => $v){
             $b .= ( is_numeric($k)) ? "<strong>" . $v . "</strong>" : "<strong>" . $k . ":</strong><em>" . $v . "</em>";
@@ -1008,7 +1037,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $ds = date('Ymd');
         $ts = date('Ymd-Hi');
         $bksuff = ($autoDaily) ? "tab-$ds" : "tmb-$ts";
-        $bkfile =  REL . BKDIR . "traqr.slite3-$bksuff.gz";
+        $bkfile =  REL . BKDIR . "traqr.sqlite3-$bksuff.gz";
         $b .= "<p>Attempting to Backup SQLite db {$this->pdoFile} to: $bkfile<br>\n";
 
         if( file_exists($bkfile)) {

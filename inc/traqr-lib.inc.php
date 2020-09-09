@@ -67,30 +67,27 @@ class traQRMgr {
     }
     ////////////////////////////////////////////////////////////////////////////
     function identityFormPostCheck(){
+        $idKeys = array('id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra');
         // want to look to see if we have a post for the identity form
         if( ! array_key_exists('id_ident',     $_POST)) return false;
         if( ! array_key_exists('id_name_first',$_POST)) return false;
         if( ! array_key_exists('id_name_last', $_POST)) return false;
 
         //print_pre($_POST,__METHOD__ . ": POST vars");
-        $strKeys = array();
-        $strKeys[] = 'id_ident';
-        $strKeys[] = 'id_name_first';
-        $strKeys[] = 'id_name_last';
-        $strKeys[] = 'id_UCSBNetID';
-        $strKeys[] = 'id_phone';
-        $strKeys[] = 'id_extra';
-        foreach( $this->buildingEntries as $num){
+        $strKeys = array();  // could possibly just do $strKeys = $idKeys;
+        foreach($idKeys as $idk) $strKeys[] = $idk;
+        foreach($this->buildingEntries as $num){
             $strKeys[] = 'Building' . $num;
             $strKeys[] = 'Room' . $num;
         }
         //$this->sanitizePost($this->idData,array('id_ident','id_name_first','id_name_last','id_UCSBNetID','id_phone','id_extra'),FILTER_SANITIZE_STRING);
-        $this->sanitizePost($this->idData,array('id_email'),FILTER_SANITIZE_EMAIL);
         $this->sanitizePost($this->idData,$strKeys,FILTER_SANITIZE_STRING);
-        //print_pre($this->idData,__METHOD__ . ': idData');
+        $this->sanitizePost($this->idData,array('id_email'),FILTER_SANITIZE_EMAIL);
+        print_pre($this->idData,__METHOD__ . ': idData');
 
-        // idInfo: Figure out if we are doing an insert or an update....
-        // qrInfo: Since an entry here is a unique triplet, we can simply do an insert or ignore.
+        // do an upsert into idInfo
+        $tpdo = new traQRpdo(getDSN());
+        $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeys);
     }
     ////////////////////////////////////////////////////////////////////////////
     function identityForm(){
@@ -109,6 +106,7 @@ class traQRMgr {
         // }
         $b = '';
         $b .= "<button onclick=\"hideShowIdentityForm()\">Hide/Show Form</button>\n";
+        $b .= "<div id=\"IdentityFormContainer\"><!-- begin IdentityFormContainer -->\n";
         $b .= "<div id=\"IdentityFormDiv\"><!-- begin IdentityFormDiv -->\n";
         $b .= $this->identityFormPostCheck();
         $b .= $this->identityFormInfo();
@@ -116,6 +114,7 @@ class traQRMgr {
         $b .= '<div class="qr-id-form-container">' . NL;
         $b .= '  <div class="qr-id-form-col">' . NL;
         $b .= '<form class="qr-id-form-form" method="POST">' . NL;
+        $b .= '<fieldset id="f1" class="identity-fs">' . NL;
         $b .= $this->identityFormInput(24,'id_ident','Identifier (email preferred)');
         $b .= "<br>\n";
         $b .= $this->identityFormInput(24,'id_name_first','First Name');
@@ -130,20 +129,25 @@ class traQRMgr {
         $b .= '<br>' . NL;
         $b .= $this->identityFormInput(24,'id_extra','Notes');
         $b .= '<br>' . NL;
+        $b .= '</fieldset>' . NL;
+
+        $b .= '<fieldset id="f2" class="identity-fs">' . NL;
         $rowCntr++;
 
         foreach( $this->buildingEntries as $num){
-            $b .= $this->identityFormInput(14,'Building'.$num,'Building Name'.$num);
+            $b .= $this->identityFormInput(15,'Building'.$num,'Building Name'.$num);
             $b .= $this->identityFormInput(8,'Room'.$num,'Room #'.$num);
             $b .= "<br>\n";
         }
 
-        $b .= '<input class="qr-id-form-submit" type="submit" id="submit" value="Generate Initial Identity Records" name="Generate Initial Identity Records" />'  . NL ;
+        $b .= '<input class="qr-id-form-submit" type="submit" id="submit" value="&nbsp;Generate Initial Identity Records&nbsp;" name="Generate Initial Identity Records" />'  . NL ;
+        $b .= '</fieldset>' . NL;
         $b .= '</form>' . NL;
         $b .= '  </div><!-- qr-form-col -->' . NL;
         $b .= '</div><!-- qr-form-container -->' . NL;
         $b .= "<br>" . NL;
         $b .= "</div><!-- end IdentityFormDiv -->\n";
+        $b .= "</div><!-- end IdentityFormContainer -->\n";
 
         print $b;
         return $b;
