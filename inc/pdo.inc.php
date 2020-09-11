@@ -318,12 +318,14 @@ class pdoCore extends PDO {
         return $classStr;
     }
     ////////////////////////////////////////////////////////////////////////////////
-    function genericDisplayTable($hash,$displayFields = array()){
+    function genericDisplayTable($hash,$displayFields = array(),$sortedon = ''){
         $b = '';
         $b .= '<table class="qr-data-table">' . NL;
         $b .= '<tr class="qr-data-table-header-row">' . NL;
         foreach($displayFields as $f){
-            $fd = "<form method=\"post\"><button type=\"submit\" class=\"sort-by\" name=\"sort-by\" value=\"$f\">";
+            // want to add in sort-by-key
+            $class = ( $f == $sortedon) ? 'sorted-on' : 'sort-by';
+            $fd = "<form method=\"post\"><button type=\"submit\" class=\"$class\" name=\"sort-by\" value=\"$f\">";
             $fd .= $f . '</button>' . NL;
             $b .= "<th class=\"qr-data-table-td $f\">$fd</th>\n";
         }

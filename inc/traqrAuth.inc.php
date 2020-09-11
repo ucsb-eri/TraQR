@@ -72,9 +72,9 @@ class traqrAuth {
         if( array_key_exists('au_user',$this->data)){
             $entries = $this->db->getKeyedHash('au_id',"SELECT * FROM auth WHERE au_user = ?;",array($this->data['au_user']));
             if( count($entries) > 0){
-                print_pre($entries,"auth entries");
+                //print_pre($entries,"auth entries");
                 $pwe = array_shift($entries);
-                print_pre($pwe,"pwe auth entry");
+                //print_pre($pwe,"pwe auth entry");
                 //$checkhash = crypt($uepw,$pwe['au_hash']);
                 // print_pre($checkhash,"checkhash");
                 // print_pre($pwe['au_hash'],"dbhash");

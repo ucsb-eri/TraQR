@@ -5,7 +5,7 @@ The styles here are specific to the db data, typically coloring or alignment onl
     text-align: right;
     width: 200px;
 }
-.sd_tatus {
+.sd_status {
     text-align: center;
     width: 125px;
 }
@@ -36,7 +36,7 @@ The styles here are specific to the db data, typically coloring or alignment onl
     background-color: #6ff;
 }
 
-td.qr_uuid, td.sd_uuid, td.au_md5, td.au_crypt {
+td.qr_uuid, td.sd_uuid, td.au_hash {
     font-family: "Lucida Console", Monaco, monospace;
 }
 .# {

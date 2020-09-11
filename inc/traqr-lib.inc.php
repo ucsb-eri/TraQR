@@ -127,6 +127,8 @@ class traQRMgr {
         $b .= "<br>\n";
         $b .= $this->identityFormInput(24,'id_phone','Phone number');
         $b .= '<br>' . NL;
+        $b .= $this->identityFormInput(24,'id_dept','Department/Company');
+        $b .= '<br>' . NL;
         $b .= $this->identityFormInput(24,'id_extra','Notes');
         $b .= '<br>' . NL;
         $b .= '</fieldset>' . NL;

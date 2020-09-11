@@ -3,8 +3,14 @@
 // will likely be abaondoned soon anyway.
 
 // this is for the simple, stupid auth I am doing
-$GLOBALS['authorizedIPs'] = array(
+$GLOBALS['authorizedIPs'] = array();
+$GLOBALS['authorizedIPs']['admin'] = array(
     '127.0.0.1',         // localhost (for cron jobs run on host)
     '128.111.100.88',    // spin      (for cron jobs run on host)
+);
+// Any user logged in from one of IPs listed in this section will have root role 
+$GLOBALS['authorizedIPs']['root'] = array(
+    '99.9.9.9',          // fablio-mini
+    '10.10.10.1',        // mtc home
 );
 ?>

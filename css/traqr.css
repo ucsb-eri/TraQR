@@ -149,10 +149,12 @@ table.confirmation tr td {
     background-color: #f66;
 }
 .ambiguous {
-    background-color: #ff6;
+    background-color: #ff6;+
+
 }
 .problematic {
-    background-color: #fb8;
+    /* KTM Orange for MTC */
+    background-color: #ff6600;
 }
 .entry-confirmation {
     /*
@@ -317,7 +319,14 @@ fieldset.identity-fs {
 }
 .sort-by {
     width: 100%;
-    background-color: yellow;
+    background-color: inherit;
+    border: none;
+    font-weight: bold;
+    font-size: 100%;
+}
+.sorted-on {
+    width: 100%;
+    background-color: #f80;
     border: none;
     font-weight: bold;
     font-size: 100%;

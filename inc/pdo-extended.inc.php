@@ -552,7 +552,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = seconds2hr($h['sd_stay']);
         }
 
-        $flds = array('sd_id','qr_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
+        $flds = array('sd_id','qr_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay' /* ,'sd_flags' */);
         $b .= $this->genericDisplayTable($hash,$flds);
 
         $b .= '</div>' . NL;
@@ -769,13 +769,27 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         // session variable should be encoded with table and field
     }
     ////////////////////////////////////////////////////////////////////////////
-    function orderByClause($table,$flds){
+    function orderByClause($table,$flds,$defkey = '',$defdir = ''){
         $b = '';
         $sesssortkey = $table . '.' . 'sort-by-key';
         $sesssortdir = $table . '.' . 'sort-by-dir';
         if( array_key_exists($sesssortkey,$_SESSION) && in_array($_SESSION[$sesssortkey],$flds)) $b .= "ORDER BY {$_SESSION[$sesssortkey]}";
         if( $b != '' && array_key_exists($sesssortdir,$_SESSION)) $b .= " {$_SESSION[$sesssortdir]}";
+
+        if ($b == '' && $defkey != ''){
+            $b .= 'ORDER BY $default';
+            $b .= ( $defdir != '') ? ' ' . $defdir : '';
+        }
+
         return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    // $defdir not used here
+    ////////////////////////////////////////////////////////////////////////////
+    function orderField($table,$flds,$default = '',$defdir = ''){
+        $sesssortkey = $table . '.' . 'sort-by-key';
+        if( array_key_exists($sesssortkey,$_SESSION) && in_array($_SESSION[$sesssortkey],$flds)) return "{$_SESSION[$sesssortkey]}";
+        return $default;
     }
     ////////////////////////////////////////////////////////////////////////////
     function displayIdInfo(){
@@ -787,6 +801,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= $this->rowDeletion($table,$rowkey);
         $b .= $this->rowEdit($table,$rowkey,array('id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_dept','id_extra'),array('id_id','id_ident'));
         $orderBy = $this->orderByClause($table,$flds);
+        $orderField = $this->orderField($table,$flds);
         $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table $orderBy;");
         $linecntr = 0;
         foreach($hash as &$h){
@@ -820,9 +835,9 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
 
         // Add in any synthesized or extra fields not related to the db
-        array_push($flds,'locs','delete','edit','regen','#');
         array_unshift($flds,'#');
-        $b .= $this->genericDisplayTable($hash,$flds);
+        array_push($flds,'locs','delete','edit','regen','#');
+        $b .= $this->genericDisplayTable($hash,$flds,$orderField);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
     }
@@ -853,34 +868,39 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
     function reportAll(){
-        $b = '';
-
-        $flds = array('sd_id','LastName','qr_building','qr_room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
-
+        $table = 'viewAll';  // the viewAll might work here, have to play with it
+        $table = 'scanData';
+        $rowkey = 'sd_id';
         // Fields array here needs to align with the db fields/view
         $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
 
-        // $this->q("CREATE TEMP VIEW IF NOT EXISTS viewAll AS SELECT
-        //       *,
-        //       qrInfo.*,
-        //       idInfo.*,
-        //       qr_building AS Building,
-        //       qr_room AS Room,
-        //       id_name_first AS 'First',
-        //       id_name_last AS Last
-        //     FROM scanData
-        //     LEFT JOIN qrInfo ON sd_uuid = qr_uuid
-        //     LEFT JOIN idInfo ON qr_ident = id_ident
-        //     ORDER BY sd_iepoch DESC;
-        // ");
+        $b = '';
+        $b .= $this->columnSortBy($table);
+        $b .= $this->rowDeletion($table,$rowkey);   // table needs to be scanData for this...
+        $orderField = $this->orderField($table,$flds,'sd_iepoch');
+        $orderBy = $this->orderByClause($table,$flds,'sd_iepoch','DESC');
+
         //$hash = $this->getKeyedHash('sd_id',"SELECT *,qr_building as Building,qr_room as Room,id_name_first AS 'First',id_name_last AS Last FROM scanData LEFT JOIN qrInfo ON sd_uuid = qr_uuid LEFT JOIN idInfo ON qr_ident = id_ident ORDER BY sd_iepoch DESC;");
-        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll ORDER BY sd_iepoch DESC;");
+        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll $orderBy;");
+        $linecntr = 0;
         foreach($hash as &$h){
+            $linecntr++;
+            $h['#'] = $linecntr;
             $h['flags'] = '';
             $h['.td-sd_status'] = '%%VALUE%%';
             $h['.td-Building'] = '%%VALUE%%';
+            $h['.td-#'] = 'rowcnt';
         }
-        $b .= $this->genericDisplayTable($hash,$flds);
+
+        if (authorized('TRAQR','root')){
+            array_push($flds,'delete');
+            foreach($hash as &$h){
+                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+            }
+        }
+        array_unshift($flds,'#');
+        array_push($flds,'#');
+        $b .= $this->genericDisplayTable($hash,$flds,$orderField);
 
         return $b;
     }
