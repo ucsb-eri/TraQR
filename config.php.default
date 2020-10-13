@@ -6,11 +6,11 @@
 $GLOBALS['authorizedIPs'] = array();
 $GLOBALS['authorizedIPs']['admin'] = array(
     '127.0.0.1',         // localhost (for cron jobs run on host)
-    '128.111.100.88',    // spin      (for cron jobs run on host)
+    '128.111.100.88',    // some IP whose user should have admin access
 );
-// Any user logged in from one of IPs listed in this section will have root role 
+// Any user logged in from one of IPs listed in this section will have root role
 $GLOBALS['authorizedIPs']['root'] = array(
-    '99.9.9.9',          // fablio-mini
-    '10.10.10.1',        // mtc home
+    '99.9.9.9',          // some IP that should have root access
+    '10.10.10.1',        // some IP that should ahve root access
 );
 ?>

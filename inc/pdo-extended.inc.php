@@ -822,9 +822,11 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $h['regen'] .= "<button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
 
 
-            $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
-            //$h['regen'] = $this->formPostButton('Regen QR','regen-button','REGEN_QR_ROW',$h[$rowkey]);
-            $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
+            if( authorized('TRAQR','root')) {
+                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+                //$h['regen'] = $this->formPostButton('Regen QR','regen-button','REGEN_QR_ROW',$h[$rowkey]);
+                $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
+            }
 
             $h['locs'] = count($regenHash);
             $h['#'] = $linecntr;
@@ -836,7 +838,11 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
 
         // Add in any synthesized or extra fields not related to the db
         array_unshift($flds,'#');
-        array_push($flds,'locs','delete','edit','regen','#');
+        array_push($flds,'locs');
+        if( authorized('TRAQR','root')) {
+            array_push($flds,'delete','edit');
+        }
+        array_push($flds,'regen','#');
         $b .= $this->genericDisplayTable($hash,$flds,$orderField);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
@@ -845,23 +851,36 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     function displayQrInfo(){
         $table = 'qrInfo';
         $rowkey = 'qr_id';
+        $flds = array('qr_id','qr_uuid','qr_ident','qr_building','qr_room');
         $b = '';
+        $b .= $this->columnSortBy($table);
         $b .= $this->rowDeletion($table,$rowkey);
 
-        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table;");
+        $orderBy = $this->orderByClause($table,$flds);
+        $orderField = $this->orderField($table,$flds);
+        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table $orderBy;");
+        $hash = $this->getKeyedHash($rowkey,"SELECT * FROM $table $orderBy;");
+        $line = 1;
         foreach($hash as &$h){
-            $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
-            //$h['delete'] = "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\"><button type=\"submit\" name=\"DELETE_ROW\" value=\"{$h['qr_id']}\">Delete</button></form>";
-            $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
-            <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qr_ident']}\"></input>
-            <input type=\"hidden\" name=\"Building1\" value=\"{$h['qr_building']}\"></input>
-            <input type=\"hidden\" name=\"Room1\" value=\"{$h['qr_room']}\"></input>
-            <button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+            $h['#'] = $line++;
         }
-        $flds = array('qr_id','qr_uuid','qr_ident','qr_building','qr_room','delete','regen');
+        if ( authorized('TraQR','root')){
+            array_push($flds,'delete','regen');
+            foreach($hash as &$h){
+                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+                //$h['delete'] = "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\"><button type=\"submit\" name=\"DELETE_ROW\" value=\"{$h['qr_id']}\">Delete</button></form>";
+                $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
+                <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qr_ident']}\"></input>
+                <input type=\"hidden\" name=\"Building1\" value=\"{$h['qr_building']}\"></input>
+                <input type=\"hidden\" name=\"Room1\" value=\"{$h['qr_room']}\"></input>
+                <button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+            }
+        }
+        array_unshift($flds,'#');
+        array_push($flds,'#');
         $b .= "<div class=\"generic-display-table\"><!-- begin generic-display-table -->\n";
         $b .= "<h3>Data displayed is primarily from table: $table</h3>\n";
-        $b .= $this->genericDisplayTable($hash,$flds);
+        $b .= $this->genericDisplayTable($hash,$flds,$orderField);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
     }
