@@ -245,6 +245,7 @@ class traQRcode {
     public $baseurl = BASEURL;
     public $modes = array('BIDIR');
 
+    ////////////////////////////////////////////////////////////////////////////
     function __construct($key,$Identifier,$building,$room){
         $this->key = $key;
         $this->data = array();
@@ -257,6 +258,7 @@ class traQRcode {
         $this->urls = array();
         $this->qrurls = array();
     }
+    ////////////////////////////////////////////////////////////////////////////
     function urlArgs($sep = "&"){
         $urlElements = array();
         $urlElements['sd_uuid']  = $this->data['sd_uuid'];
@@ -269,9 +271,11 @@ class traQRcode {
         // }
         // return implode("$sep",$elem);
     }
+    ////////////////////////////////////////////////////////////////////////////
     function genURL($script,$mode,$sep = "&"){
         return "{$this->baseurl}/{$script}?sd_mode={$mode}&" . $this->urlArgs($sep);
     }
+    ////////////////////////////////////////////////////////////////////////////
     function generateQRs(){
         // This was originally designed for INGRESS/EGRESS modes, but evolution has
         // moved away from that, leaving loop in for time being though.
@@ -305,6 +309,7 @@ class traQRcode {
             QRcode::png($this->genURL("Enter.php",$mode),$this->qrfiles[$mode]);
         }
     }
+    ////////////////////////////////////////////////////////////////////////////
     function qrDisplayHTML(){
         if ( $this->data['qr_ident']    == '' ) return '';
         if ( $this->data['qr_building'] == '' ) return '';

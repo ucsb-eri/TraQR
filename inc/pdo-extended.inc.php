@@ -864,7 +864,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         foreach($hash as &$h){
             $h['#'] = $line++;
         }
-        if ( authorized('TraQR','root')){
+        if ( authorized('TRAQR','root')){
             array_push($flds,'delete','regen');
             foreach($hash as &$h){
                 $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
