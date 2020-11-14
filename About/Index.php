@@ -34,31 +34,6 @@
         are generated, we could just check incoming entries against that db to make sure the code is valid.  If not connection dropped.
 
 </section>
-<section>
-    <h2>ToDo - Next Steps</h2>
-    <ul>
-        <li>DB Schema updates:
-            <ul>
-                <li>scanData
-                    <ul>
-                        <li>move pCMZ, aCMZ into another table that maps in building and room number?</li>
-                        <li>add uuid (sc_uuid?) field for our checksum/passcode/code data to associate with qrgen info</li>
-                        <li>Remove building/room in scanData - those will be joined in from idInfo table</li>
-                        <li>remove Mode? - not sure its needed in db at this point.<li>
-                    </ul>
-                </li>
-                <li>qrInfo
-                    <ul>
-                        <li>Add qr_uuid</li>
-                        <li>add uuid field for our checksum/passcode/code data to associate with qrgen info</li>
-                        <li>Remove building/room in scanData - those will be joined in from idInfo table</li>
-                        <li>remove Mode? - not sure its needed in db at this point.<li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</section>
 
 <?php
 

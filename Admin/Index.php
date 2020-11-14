@@ -7,7 +7,7 @@
 
     $hd->htmlBeg();
 
-    if ( authorized() ){
+    if ( authorized('TRAQR','admin') ){
         $b = '';
 
         //if (defined('REL')) $b .= "REL == " . REL . "<br>\n";
@@ -39,7 +39,7 @@
         $b .= "<li>" . $hd->relUrl('About/Index.php','About Page') . "</li>\n";
         $b .= "</ul>\n";
 
-        $b .= "<p>User: " . $_SERVER['PHP_AUTH_USER'] . "</p>\n";
+        //$b .= "<p>User: " . $_SERVER['PHP_AUTH_USER'] . "</p>\n";
 
         $b .= '</section>' . NL;
         print $b;

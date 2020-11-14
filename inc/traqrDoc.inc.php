@@ -70,7 +70,9 @@ class traqrDoc extends htmlDoc {
          $m = new menu('nav','navlink');
          $m->addMenu('index','Home','/Index.php');
          $m->addItem('index','About','/About/Index.php');
+         $m->addItem('index','Credits','/About/Credits.php');
          if ( authorized('TRAQR','admin')){
+             $m->addItem('index','Todo','/About/Todo.php');
              $m->addMenu('admin','Admin','/Admin/Index.php');
              $m->addItem('admin','Initial Identity','/Admin/InitialIdentityEntry.php');
              $m->addItem('admin','Gen New QRs','/Admin/GenQR.php');
@@ -153,6 +155,11 @@ class traqrDoc extends htmlDoc {
          return $b;
 
      }
+     function contentTodo(){
+         $b = "
+         ";
+         return $b;
+     }
      function contentIndex(){
          $b = '';
          $b .= "
@@ -176,45 +183,9 @@ class traqrDoc extends htmlDoc {
          </p>
          ";
 
-         $todo = "
-         <p>
-         <strong>To Do</strong>
-         <ul>
-         <li>General
-           <ul>
-             <li>Authenticate to SSO?</li>
-           </ul>
-         </li>
-         <li>QR code generation
-           <ul>
-           <li>Input checking on room number(numerical with optionally one trailing alpha)</li>
-           <li class=\"done\">Switch to UCSBNetID based (aaron_martin@ucsb.edu)</li>
-           </ul>
-         </li>
-         <li>Data Scanning
-           <ul>
-             <li class=\"done\">Improve Display (you have been logged)</li>
-             <li>Check for existence of user to flash NOT approved (?)</li>
-           </ul>
-         </li>
-         <li>Data Display
-           <ul>
-             <li>Sortable</li>
-             <li class=\"done\">Some data checking (Egress with no ingress, ingress with no egress, who is in the building)</li>
-           </ul>
-         </li>
-         <li>Data Management
-           <ul>
-             <li>Table with Mapping from UCSBNetID to FirstName, LastName, PhoneNumber (?)</li>
-             <li class=\"done\">Some data checking (Egress with no ingress, ingress with no egress, who is in the building)</li>
-           </ul>
-         </li>
-         </ul>
-         </p>
-         ";
 
          if (authorized()){
-             $b .= "$todo";
+             $b .= $this->contentTodo();
          }
 
          return $b;

@@ -1,0 +1,2 @@
+Require local
+ErrorDocument 403 "Access to this content is forbidden"
