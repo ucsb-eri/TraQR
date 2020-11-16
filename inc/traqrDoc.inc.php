@@ -80,6 +80,7 @@ class traqrDoc extends htmlDoc {
              $m->addItem('admin','Auth Table','/Admin/authMgmt.php');
              $m->addItem('admin','QR Table','/Admin/qrGenMgmt.php');
              $m->addItem('admin','ID Table','/Admin/IdentifierMgmt.php');
+             $m->addItem('admin','Import File','/Admin/ImportFile.php');
              $m->addSep('admin');
              $m->addItem('admin','Report All','/Admin/ReportAll.php');
              $m->addItem('admin','Report Daily','/Admin/ReportDaily.php');

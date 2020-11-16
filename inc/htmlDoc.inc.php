@@ -113,12 +113,23 @@ class htmlDoc {
             $b .= $this->navHTML();
         }
 
+        if (! file_exists(REL . '/' . DB)){
+            $b .= $this->alertBanner('failure','DB file does NOT exist, so site will not operate correctly.  See installation instructions.');
+            //$b .= "NO DB File!<br>\n";
+        }
+
         if ( $this->options['print'] ) {  print  $b;  }
         else                           {  return $b;  }
     }
     // stub
     function navHTML(){
 
+    }
+    function alertBanner($class,$mesg){
+        $b = "<div class=\"alertBanner $class\">";
+        $b .= "$mesg";
+        $b .= '</div>';
+        return $b;
     }
     function htmlEnd($printBuffer = TRUE){
         $b = '';

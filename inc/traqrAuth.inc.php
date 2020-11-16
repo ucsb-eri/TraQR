@@ -4,7 +4,13 @@ class traqrAuth {
     function __construct(){
         $this->data = array();
         $this->dbFields = array('au_user','au_hash','au_role');
-        $this->db = new traqrPDO(getDSN());
+        $this->db = null;
+        try {
+            $this->db = new traqrPDO(getDSN());
+        }
+        catch(PDOException $Exception){
+            // Either throw an exception, or handle some other way???
+        }
     }
     ///////////////////////////////////////////////////////////////////////////
     function unsetSessionAuth(){

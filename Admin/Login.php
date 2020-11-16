@@ -1,4 +1,8 @@
 <?php
+//
+// Pretty sure this is not really used.
+// This was an attempt at relogging into a different Apache HTTP Basic Auth domain
+//
 function authenticate() {
     header('WWW-Authenticate: Basic realm="Test Authentication System"');
     header('HTTP/1.0 401 Unauthorized');
@@ -6,6 +10,8 @@ function authenticate() {
     exit;
 }
 
+// The PHP_AUTH_USER is provided by Apache HTTP Basic Auth
+//
 if (!isset($_SERVER['PHP_AUTH_USER']) ||
     ($_POST['SeenBefore'] == 1 && $_POST['OldAuth'] == $_SERVER['PHP_AUTH_USER'])) {
     authenticate();

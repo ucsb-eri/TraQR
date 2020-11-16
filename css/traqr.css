@@ -334,3 +334,9 @@ fieldset.identity-fs {
 .edit-row {
     font-size: 120%;
 }
+.alertBanner {
+    margin: 3px;
+    padding: 5px;
+    border: 1px solid blue;
+    border-radius: 6px;
+}
