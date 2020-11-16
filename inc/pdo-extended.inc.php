@@ -487,6 +487,8 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     }
     ////////////////////////////////////////////////////////////////////////////
     function reportDataByDayForDS($ds){
+        $table = 'scanData';
+        $rowkey = 'sd_id';
         // should maybe do a regex check on it
         if ( $ds == '' ) return '';
         //print "ds: $ds<br>\n";
@@ -497,7 +499,14 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= '<div class="an-data-ds-container">' . NL;
         $b .= '<h3>Report by Person for datestamp: ' . $ds . ' - ' . $hrds . $enhance . '</h3>' . NL;
 
-        $dayHash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll WHERE sd_ds = ? ORDER BY id_ident;",array($ds));
+        $flds = array('sd_id','id_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
+
+        $b .= $this->columnSortBy($table);
+        $b .= $this->rowDeletion($table,$rowkey);   // table needs to be scanData for this...
+        $orderField = $this->orderField($table,$flds,'sd_iepoch');
+        $orderBy = $this->orderByClause($table,$flds,'sd_iepoch','DESC');
+
+        $dayHash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll WHERE sd_ds = ? $orderBy;",array($ds));
         foreach($dayHash as &$h){
             $h['flags'] = '';
             $h['flags'] = '';
@@ -505,9 +514,47 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $h['.td-Building'] = '%%VALUE%%';
             if ($h['sd_status'] == 'PAIRED' || $h['sd_status'] == 'TESTING') $h['sd_hrstay'] = seconds2hr($h['sd_stay']);
         }
-        $flds = array('sd_id','id_ident','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_stay','sd_hrstay','sd_flags');
-        $b .= $this->genericDisplayTable($dayHash,$flds);
+        $b .= $this->genericDisplayTable($dayHash,$flds,$orderField);
         $b .= '</div>' . NL;
+        return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    function reportAll(){
+        $table = 'viewAll';  // the viewAll might work here, have to play with it
+        $table = 'scanData';
+        $rowkey = 'sd_id';
+        // Fields array here needs to align with the db fields/view
+        $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
+
+        $b = '';
+        $b .= $this->columnSortBy($table);
+        $b .= $this->rowDeletion($table,$rowkey);   // table needs to be scanData for this...
+        $orderField = $this->orderField($table,$flds,'sd_iepoch');
+        $orderBy = $this->orderByClause($table,$flds,'sd_iepoch','DESC');
+
+        //$hash = $this->getKeyedHash('sd_id',"SELECT *,qr_building as Building,qr_room as Room,id_name_first AS 'First',id_name_last AS Last FROM scanData LEFT JOIN qrInfo ON sd_uuid = qr_uuid LEFT JOIN idInfo ON qr_ident = id_ident ORDER BY sd_iepoch DESC;");
+        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll $orderBy;");
+        $linecntr = 0;
+        foreach($hash as &$h){
+            $linecntr++;
+            $h['#'] = $linecntr;
+            $h['flags'] = '';
+            $h['.td-sd_status'] = '%%VALUE%%';
+            $h['.td-Building'] = '%%VALUE%%';
+            $h['.td-#'] = 'rowcnt';
+        }
+
+        if (authorized('TRAQR','root')){
+            array_push($flds,'delete');
+            foreach($hash as &$h){
+                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
+            }
+        }
+        array_unshift($flds,'#');
+        array_push($flds,'#');
+        $b .= $this->genericDisplayTable($hash,$flds,$orderField);
+
         return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
@@ -883,45 +930,6 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         $b .= $this->genericDisplayTable($hash,$flds,$orderField);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
-    function reportAll(){
-        $table = 'viewAll';  // the viewAll might work here, have to play with it
-        $table = 'scanData';
-        $rowkey = 'sd_id';
-        // Fields array here needs to align with the db fields/view
-        $flds = array('sd_id','sd_uuid','qr_ident','First','Last','Building','Room','sd_mode','sd_status','sd_ds','sd_its','sd_iepoch','sd_ets','sd_eepoch','sd_iip','sd_eip','sd_flags');
-
-        $b = '';
-        $b .= $this->columnSortBy($table);
-        $b .= $this->rowDeletion($table,$rowkey);   // table needs to be scanData for this...
-        $orderField = $this->orderField($table,$flds,'sd_iepoch');
-        $orderBy = $this->orderByClause($table,$flds,'sd_iepoch','DESC');
-
-        //$hash = $this->getKeyedHash('sd_id',"SELECT *,qr_building as Building,qr_room as Room,id_name_first AS 'First',id_name_last AS Last FROM scanData LEFT JOIN qrInfo ON sd_uuid = qr_uuid LEFT JOIN idInfo ON qr_ident = id_ident ORDER BY sd_iepoch DESC;");
-        $hash = $this->getKeyedHash('sd_id',"SELECT * FROM viewAll $orderBy;");
-        $linecntr = 0;
-        foreach($hash as &$h){
-            $linecntr++;
-            $h['#'] = $linecntr;
-            $h['flags'] = '';
-            $h['.td-sd_status'] = '%%VALUE%%';
-            $h['.td-Building'] = '%%VALUE%%';
-            $h['.td-#'] = 'rowcnt';
-        }
-
-        if (authorized('TRAQR','root')){
-            array_push($flds,'delete');
-            foreach($hash as &$h){
-                $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
-            }
-        }
-        array_unshift($flds,'#');
-        array_push($flds,'#');
-        $b .= $this->genericDisplayTable($hash,$flds,$orderField);
-
-        return $b;
     }
     ////////////////////////////////////////////////////////////////////////////
     function mergeRecords($from,$into){
