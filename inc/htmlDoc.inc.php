@@ -117,6 +117,9 @@ class htmlDoc {
             $b .= $this->alertBanner('failure','DB file does NOT exist, so site will not operate correctly.  See installation instructions.');
             //$b .= "NO DB File!<br>\n";
         }
+        if (! is_writable(REL . '/var')){
+            $b .= $this->alertBanner('failure','var not writable!  In a shell, as root: navigate to run directory and run "make perms"');
+        }
 
         if ( $this->options['print'] ) {  print  $b;  }
         else                           {  return $b;  }
