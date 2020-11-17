@@ -29,35 +29,57 @@
             }
             else {
                 $b .= "Upload Failed for some reason<br>";
-
             }
         }
-
 
         $ce = new traQRpdo(getDSN());
         // $b .= $ce->importFileForm();
 
-        $b .= "<form method=\"post\" enctype=\"multipart/form-data\">
+        $b .= "<hr><form method=\"post\" enctype=\"multipart/form-data\">
   Select Pipe \"|\" Separated Value import text file to upload:
   <input type=\"file\" name=\"fileToUpload\" id=\"fileToUpload\">
   <input type=\"submit\" value=\"Upload Data File\" name=\"submit\">
 </form>";
 
 
-        $b .= "<br><h3>Import File</h3>
+        $b .= "<br><hr><h3>Import File Description</h3>
         <ul>
-        <li>File is expected to be a | delimited file.</li>
-        <li>Controls:
+        <li>File is expected to be a text file containing multiple id+qr records (one record/line)</li>
+        <li>Each record has the following 10 &quot;|&quot; delimited fields:
             <ul>
-                <li>The \"Delete\" Delete a single row from the table.  Has confirm/cancel functionality.</li>
-                <li>The \"Edit\" button creates a form at the top of the page to modify the editable values for a single row.  Has Confirm/Cancel functionality.</li>
-                <li>The \"Regen QR\" Loads QR info for any/all locations that the user has associated with that Identifier (up to the max).</li>
+            <li>id_ident - individual's unique identifier (Required: usually email)</li>
+            <li>id_name_first - individuals first name (optional)</li>
+            <li>id_name_last - individuals last name (optional)</li>
+            <li>id_phone - individuals phone number (optional)</li>
+            <li>id_email - individuals email (optional)</li>
+            <li>id_UCSBNetID - individuals UCSBNetID (optional)</li>
+            <li>id_dept - individuals department at the university or other primary affiliation (optional)</li>
+            <li>qr_building - building name that individual will be occupying (Required)</li>
+            <li>qr_room - room or room cluster that the individual will be occupying (Required)</li>
+            <li>qr_detail - if room cluster is used, this should provide details of location(s) involved (optional)</li>
+            </ul>
+        </li>
+        <li>All 10 fields are REQUIRED for each import record:
+            <ul>
+            <li>The &quot;Required&quot; and &quot;Optional&quot; notes above concern what the overall system needs to operate.
+            </ul>
+        </li>
+
+        <li>Header should look like:
+            <ul>
+                <li>id_ident|id_name_first|id_name_last|id_phone|id_email|id_UCSBNetID|id_dept|qr_building|qr_room|qr_detail</li>
+            </ul>
+        </li>
+        <li>Prepping export file from Google Sheets:
+            <ul>
+                <li>Step 1:</li>
             </ul>
         </li>
 
         ";
     }
     else $b .= authFail();
+
     print "$b";
 
     $hd->htmlEnd();
