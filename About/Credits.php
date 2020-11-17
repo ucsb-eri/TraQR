@@ -8,7 +8,7 @@
 <section>
     <h2>Development Team:</h2>
     <ul>
-        <li>Aaron Martin - Initial Creation and Development Lead (2020-??-??)</li>
+        <li>Aaron Martin - Initial Creation and Development Lead (2020-07-30??)</li>
     </ul>
 </section>
 <section>

@@ -20,7 +20,7 @@
         $b .= "<li>" . $hd->relUrl('Enter.php','Entry Script (for Testing)') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('About/Index.php','About Page') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Login.php','Login') . "</li>\n";
-        $b .= "<li>" . $hd->relUrl('EntryCompleted.php','Entry Completed (Safety) page') . "</li>\n";
+        $b .= "<li>" . $hd->relUrl('Safety.php','Safety Page (Entry Completed)') . "</li>\n";
         $b .= "<li>" . $hd->relUrl('Util/authTesting.php','Auth Testing') . "</li>\n";
         $b .= "<li><a href=\"http://traqr.eri.ucsb.edu/Enter.php?sd_uuid=\">Older Test link from version with UCSBNetID in it.  (Will be deprecated soon.)</li>\n";
 

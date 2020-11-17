@@ -92,7 +92,7 @@ class traqrDoc extends htmlDoc {
              $m->addItem('util','Session Info','/Util/sessionInfo.php');
              $m->addItem('util','DB Schema','/Util/dbSchema.php');
              $m->addItem('util','DB Backup','/Util/dbBackup.php');
-             $m->addItem('util','Entry Completed','/EntryCompleted.php');
+             $m->addItem('util','Entry Completed','/Safety.php');
              $m->addItem('util','Auth Testing','/Util/authTesting.php');
          }
 
@@ -122,73 +122,6 @@ class traqrDoc extends htmlDoc {
          $b .= "</header>\n";
          $b .= $this->menu();
          $b .= "<hr>\n";
-         return $b;
-     }
-     ///////////////////////////////////////////////////////////////////////////
-     // This was a test of the dropdown menu stuff snagged online before implementing
-     // my menu class above.  Kinda junk, but will do for the time being.
-     ///////////////////////////////////////////////////////////////////////////
-     function whatevs(){
-         $b = '  <ul class="nav">
-   <li class="dropdown nav">
-     <a class="navlink" href="/Index.php" class="dropbtn">Home</a>
-     <div class="dropdown-content">
-       <a class="navlink" href="#">About</a><br>
-     </div>
-   </li>
-   <li class="dropdown nav">
-     <a class="navlink" href="javascript:void(0)" class="dropbtn">Util/Dev/Tools</a>
-     <div class="dropdown-content">
-       <a class="navlink" href="#">PHPinfo</a><br>
-       <a class="navlink" href="#">DB Schema</a><br>
-       <a class="navlink" href="#">Report All</a><br>
-     </div>
-   </li>
-   <li class="dropdown nav">
-     <a class="navlink" href="javascript:void(0)" class="dropbtn">Admin</a>
-     <div class="dropdown-content">
-       <a class="navlink" href="#">Report Daily</a><br>
-       <a class="navlink" href="#">Report Daily (by ident)</a><br>
-       <a class="navlink" href="#">Report All</a><br>
-     </div>
-   </li>
- </ul>';
-         return $b;
-
-     }
-     function contentTodo(){
-         $b = "
-         ";
-         return $b;
-     }
-     function contentIndex(){
-         $b = '';
-         $b .= "
-         <p>
-         This site is a quick proof of concept for generating custom QR codes for Individuals specific to Building and Room.
-         <br>
-         The idea is to collect the data in a form that is easier to harvest than what we have seen so far in other methods.
-         </p>
-         <p>
-         The Generate Codes link below allows the user to specify up to 7 combinations of Building/Room to produce both INGRESS and EGRESS QR codes for.
-         <br>
-         Use the nav menu at the top of the page to navigate to the various options and operations.
-         </p>
-         <p>
-         Administrators (checked via IP) will see additional options in the navmenu and be able to look at the logged data.
-         </p>
-         <p>
-         The URL in the QR code is a form submission script that is also part of this site.
-         <br>
-         When the QR code is scanned and the resulting site visited the form creates a sqlite3 db entry from that information with appropriate timestamps.
-         </p>
-         ";
-
-
-         if (authorized()){
-             $b .= $this->contentTodo();
-         }
-
          return $b;
      }
 }

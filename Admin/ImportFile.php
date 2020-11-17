@@ -6,11 +6,43 @@
     //$hd->css(CSSFILE);
 
     $hd->htmlBeg();
+    $b = '';
 
     if ( authorized() ){
-        $b = '';
+        print_pre($_POST,"POST array");
+        print_pre($_FILES,"FILES array");
+        if (isset($_POST['submit'])){
+            $b .= "Upload file detected<br>";
+
+            $target_dir = REL . "var/uploads/";
+            $target_file = $target_dir . 'uploaded.psv';
+            $uploadOk = 1;
+            if(isset($_POST["submit"])) {
+                if($_FILES["fileToUpload"]["error"] == 0){
+                    if( move_uploaded_file($_FILES['fileToUpload']['tmp_name'],$target_file)){
+                        $b .= "File successfully moved to $target_file<br>";
+                    }
+                    else {
+                        $b .= "Failed to move uploaded file to: $target_file<br>";
+                    }
+                }
+            }
+            else {
+                $b .= "Upload Failed for some reason<br>";
+
+            }
+        }
+
+
         $ce = new traQRpdo(getDSN());
-        $b .= $ce->importFileForm();
+        // $b .= $ce->importFileForm();
+
+        $b .= "<form method=\"post\" enctype=\"multipart/form-data\">
+  Select Pipe \"|\" Separated Value import text file to upload:
+  <input type=\"file\" name=\"fileToUpload\" id=\"fileToUpload\">
+  <input type=\"submit\" value=\"Upload Data File\" name=\"submit\">
+</form>";
+
 
         $b .= "<br><h3>Import File</h3>
         <ul>
@@ -24,9 +56,9 @@
         </li>
 
         ";
-        print $b;
     }
-    else print authFail();
+    else $b .= authFail();
+    print "$b";
 
     $hd->htmlEnd();
 ?>

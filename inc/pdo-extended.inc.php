@@ -1021,7 +1021,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     }
     function scanConfirmationTable($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$dbFields = array(),$data = array()){
         $b = '';
-        $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=DONE\">";
+        $b .= "<a class=\"entry-confirmation-link\" href=\"Safety.php?info=DONE\">";
         $b .= "<div class=\"big-button entry-confirmation $confirmationClass\">\n";
         $b .= "<strong class=\"confirmation\">$confirmationMessage for</strong><br>\n";
         // Want to get id_ident and maybe building and room, maybe not needed
@@ -1041,7 +1041,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     }
     function scanCancel(){
         $b = '';
-        $b .= "<a class=\"big-button skip-entry\" href=\"./EntryCompleted.php?info=SKIPPED\">";
+        $b .= "<a class=\"big-button skip-entry\" href=\"./Safety.php?info=SKIPPED\">";
         $b .= "Skip " . $this->data['sd_mode'] . " Confirmation";
         $b .= "</a>\n";
         return $b;
@@ -1063,7 +1063,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     }
     function scanConfirmationMessages($confirmationMessage,$confirmationClass,$infoCode = 'SUCCESS',$msgLines = array()){
         $b = '';
-        $b .= "<a class=\"entry-confirmation-link\" href=\"EntryCompleted.php?info=$infoCode\">";
+        $b .= "<a class=\"entry-confirmation-link\" href=\"Safety.php?info=$infoCode\">";
         $b .= "<div class=\"big-button entry-confirmation $confirmationClass\">\n";
         $b .= "<strong class=\"confirmation\">$confirmationMessage</strong><br>\n";
         foreach( $msgLines as $k => $v){
