@@ -8,5 +8,7 @@ backup:
 perms:
 	sudo chown -R apache:apache ../var
 
+# current setup takes two executables, I think I would like to have a script that
+# provides an argument for the version file and is fed a list of files to check...
 version:
 	(cd ..; bin/version-gen)
