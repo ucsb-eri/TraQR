@@ -7,3 +7,6 @@ backup:
 
 perms:
 	sudo chown -R apache:apache ../var
+
+version:
+	(cd ..; bin/version-gen)
