@@ -33,7 +33,8 @@
 <ul>
 <li>General
   <ul>
-    <li>Authenticate to SSO?</li>
+      <li>Authenticate to SSO?</li>
+      <li>Add version to about page?  Or elsewhere?</li>
   </ul>
 </li>
 <li>QR code generation
