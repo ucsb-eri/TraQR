@@ -12,18 +12,15 @@
             <ul>
                 <li>scanData
                     <ul>
-                        <li>move pCMZ, aCMZ into another table that maps in building and room number?</li>
-                        <li>add uuid (sc_uuid?) field for our checksum/passcode/code data to associate with qrgen info</li>
-                        <li>Remove building/room in scanData - those will be joined in from idInfo table</li>
+                        <li class="done">move pCMZ, aCMZ into another table that maps in building and room number?</li>
+                        <li class="done">Remove building/room in scanData - those will be joined in from idInfo table</li>
                         <li>remove Mode? - not sure its needed in db at this point.<li>
                     </ul>
                 </li>
                 <li>qrInfo
                     <ul>
-                        <li>Add qr_uuid</li>
-                        <li>add uuid field for our checksum/passcode/code data to associate with qrgen info</li>
-                        <li>Remove building/room in scanData - those will be joined in from idInfo table</li>
-                        <li>remove Mode? - not sure its needed in db at this point.<li>
+                        <li class="done">Add qr_uuid</li>
+                        <li class="done">add uuid field for our checksum/passcode/code data to associate with qrgen info</li>
                     </ul>
                 </li>
             </ul>
@@ -43,6 +40,14 @@
   <ul>
   <li>Input checking on room number(numerical with optionally one trailing alpha)</li>
   <li class="done">Switch to UCSBNetID based (aaron_martin@ucsb.edu)</li>
+  <li>Add in QR code display to new Identity form
+      <ul>
+          <li>Modularize to just show based on qr_uuid, pass in as an array?</li>
+      </ul>
+  </li>
+  <li>Remove old QR Code Generation once the above is done</li>
+
+
   </ul>
 </li>
 <li>Data Scanning
@@ -68,6 +73,6 @@
 
 
 <?php
-    print $hd->contentTodo();
+    //print $hd->contentTodo();
     $hd->htmlEnd();
 ?>
