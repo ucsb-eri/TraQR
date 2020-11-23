@@ -50,7 +50,7 @@ class traQRMgr {
     ////////////////////////////////////////////////////////////////////////////
     function identityFormInfo(){
         $b = '';
-        $b .= "Identifier Order Preference:<ul>
+        $b .= "<strong>Identifier Order Preference:</strong><ul>
         <li>UCSBNetID based email: ie: &lt;UCSBNetID@ucsb.edu&gt;</li>
         <li>Email: ie: user@gmail.com</li>
         <li>Contractor-firstnameLastname (in title case): ie: ADT-JoeGaucho</li>
@@ -68,6 +68,7 @@ class traQRMgr {
     }
     ////////////////////////////////////////////////////////////////////////////
     function identityFormPostCheck(){
+        $tpdo = new traQRpdo(getDSN());
         $idKeys = array('id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra','id_dept');
         //$strKeys = array('id_dept','id_phone');
         // should setup separate/specialized sanitization filters for phone number
@@ -93,15 +94,21 @@ class traQRMgr {
 
         // now cover any specialized entries
         $this->sanitizePost($this->idData,array('id_email'),FILTER_SANITIZE_EMAIL);
-
-
         //print_pre($this->idData,__METHOD__ . ': idData');
 
         // do an upsert into idInfo
-        $tpdo = new traQRpdo(getDSN());
-        $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeys);
+        if ($this->idData['id_ident'] == '') {
+            print alertBanner('',"Ident field blank - skipping upsert");
+            return "";
+        }
+        else {
+            $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeys);
+        }
 
+        ////////////////////////////////////////////////////////////////////////
         // work on qrInfo entries now
+        ////////////////////////////////////////////////////////////////////////
+        $qrKeys = array('qr_uuid','qr_ident','qr_building','qr_room','qr_detail');
         $this->qrData['qr_ident'] = $this->idData['id_ident'];
         // $tpdo->upsert('qrInfo','qr_uuid',$this->qrData,$idKeys);
         foreach($this->buildingEntries as $num){
@@ -109,13 +116,15 @@ class traQRMgr {
             $bkey = 'Building' . $num;
             $rkey = 'Room' . $num;
             $dkey = 'Detail' . $num;
-            if( $this->idData[$bkey] == '') continue;
+            if( $this->qrData['qr_ident'] == '' || $this->idData[$bkey] == '' || $this->idData[$rkey] == '' ) continue;
             $this->qrData['qr_building'] = $this->idData[$bkey];
             $this->qrData['qr_room'] = $this->idData[$rkey];
             $this->qrData['qr_detail'] = $this->idData[$dkey];
+            $this->qrData['qr_uuid'] = genUUID($this->qrData['qr_ident'],$this->qrData['qr_building'],$this->qrData['qr_room']);
             print_pre($this->qrData,__METHOD__ . ': qrData');
 
-            // So we have data now, and should create the uuid and upsert qr info
+            // upsert QR table info
+            $tpdo->upsert('qrInfo','qr_uuid',$this->qrData,$qrKeys);
         }
     }
     ////////////////////////////////////////////////////////////////////////////

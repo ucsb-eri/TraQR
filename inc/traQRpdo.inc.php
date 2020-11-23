@@ -899,7 +899,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
     function displayQrInfo(){
         $table = 'qrInfo';
         $rowkey = 'qr_id';
-        $flds = array('qr_id','qr_uuid','qr_ident','qr_building','qr_room');
+        $flds = array('qr_id','qr_uuid','qr_ident','qr_building','qr_room','qr_detail');
         $b = '';
         $b .= $this->columnSortBy($table);
         $b .= $this->rowDeletion($table,$rowkey);

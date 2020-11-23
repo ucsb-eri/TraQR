@@ -27,7 +27,7 @@ function seconds2hr($secs){
  * @param integer $level GZIP compression level (default: 9)
  * @return string New filename (with .gz appended) if success, or false if operation fails
  */
-function gzCompressFile($source, $level = 9){ 
+function gzCompressFile($source, $level = 9){
     $dest = $source . '.gz';
     $mode = 'wb' . $level;
     $error = false;
@@ -48,5 +48,14 @@ function gzCompressFile($source, $level = 9){
     else
         return $dest;
 }
+////////////////////////////////////////////////////////////////////////////////
+function alertBanner($class = 'failure',$mesg = 'Fatal Error'){
+    if ( $class == '') $class = 'failure';
+    $b = "<div class=\"alertBanner $class\">";
+    $b .= "$mesg";
+    $b .= '</div>';
+    return $b;
+}
+
 
 ?>
