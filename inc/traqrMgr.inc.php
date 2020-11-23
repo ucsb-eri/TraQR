@@ -11,6 +11,7 @@ class traQRMgr {
         // an already existing QR
         $this->idData = array();
         $this->qrData = array();
+        $this->qrUUIDsToDisplay = array();
         $this->regenData = array();
         $this->checkPostForVars();
     }
@@ -121,10 +122,13 @@ class traQRMgr {
             $this->qrData['qr_room'] = $this->idData[$rkey];
             $this->qrData['qr_detail'] = $this->idData[$dkey];
             $this->qrData['qr_uuid'] = genUUID($this->qrData['qr_ident'],$this->qrData['qr_building'],$this->qrData['qr_room']);
-            print_pre($this->qrData,__METHOD__ . ': qrData');
+            //print_pre($this->qrData,__METHOD__ . ': qrData');
 
             // upsert QR table info
             $tpdo->upsert('qrInfo','qr_uuid',$this->qrData,$qrKeys);
+
+            // finally cache the UUIDs for display later, a bit ugly, but should work nicely.
+            $this->qrUUIDsToDisplay[] = $this->qrData['qr_uuid'];
         }
     }
     ////////////////////////////////////////////////////////////////////////////
@@ -187,12 +191,41 @@ class traQRMgr {
         $b .= '  </div><!-- qr-form-col -->' . NL;
         $b .= '</div><!-- qr-form-container -->' . NL;
         $b .= "<br>" . NL;
-        $b .= "</div><!-- end IdentityFormDiv -->\n";
         $b .= "<p>Additional Information for data entry:</p>";
+        $b .= "</div><!-- end IdentityFormDiv -->\n";
         $b .= "</div><!-- end IdentityFormContainer -->\n";
 
         print $b;
         return $b;
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function displayQRcodesMode($type = 'POST',$which = array()){
+        $b = '';
+        switch($type){
+            case 'POST':
+                // not sure how this will go yet, but leaving for time being
+                break;
+            case 'IDENT':  // this case is for if we are passed in an id_ident, get list of qr_uuids to pass
+                break;
+            case 'DATA':   // this is from previously processed initial ident form, we already have the data, so just use
+                $b .= $this->displayQRcodes($this->qrUUIDsToDisplay);
+                break;
+            case 'UUID':   // the array passed in contains the list of qrUUIDs to display
+                break;
+        }
+        print "$b";
+    }
+    ////////////////////////////////////////////////////////////////////////////
+    function displayQRcodes($uuidlist = array()){
+        $b = '';
+        $cntr = 0;
+        foreach($uuidlist as $uuid){
+            //$b .= "# Processing qr_uuid: $uuid<br>\n";
+            $tqrcn = new traQRcodeNew('cnstr'.$cntr,$uuid);
+            $b .= $tqrcn->html();
+            $cntr++;
+        }
+        return "$b";
     }
     ////////////////////////////////////////////////////////////////////////////
     function htmlForm(){

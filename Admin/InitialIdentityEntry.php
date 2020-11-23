@@ -11,7 +11,7 @@
 
     //$tmgr->checkPost();
     $tmgr->identityForm();
-    //$tmgr->doQRcodes();
+    $tmgr->displayQRcodesMode('DATA');
 
     print '</section>' . NL;
     $hd->htmlEnd();
