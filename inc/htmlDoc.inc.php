@@ -2,6 +2,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 class htmlDoc {
+    ////////////////////////////////////////////////////////////////////////////
     function __construct($title){
         $this->rel = '';
         $this->title = $title;
@@ -15,6 +16,7 @@ class htmlDoc {
         if( defined('REL')) $this->rel = REL;
         // $this->rel = $this->findRelPath('css');
     }
+    ////////////////////////////////////////////////////////////////////////////
     function setDefaultOptions(){
         $this->options['lang'] = 'en';
         $this->options['heading'] = 'USE_TITLE';
@@ -28,12 +30,15 @@ class htmlDoc {
             $this->head[] = "<link rel=\"icon\" href=\"" . BASEURL . "/favicon.ico?vers=1\" />\n";
         }
     }
+    ////////////////////////////////////////////////////////////////////////////
     function setOption($k,$v){
         $this->options[$k] = $v;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function relURL($path,$label,$class = ''){
         return "<a class=\"$class\" href=\"" .$this->rel . $path . "\">$label</a>";
     }
+    ////////////////////////////////////////////////////////////////////////////
     function navItem($path,$label){
         //$this->rel = $this->findRelPath($path);
         //print "rel: {$this->rel}<br>\n";
@@ -113,27 +118,31 @@ class htmlDoc {
             $b .= $this->navHTML();
         }
 
-        if (! file_exists(REL . '/' . DB)){
-            $b .= $this->alertBanner('failure','DB file does NOT exist, so site will not operate correctly.  See installation instructions.');
-            //$b .= "NO DB File!<br>\n";
-        }
-        if (! is_writable(REL . '/var')){
-            $b .= $this->alertBanner('failure','var not writable!  In a shell, as root: navigate to run directory and run "make perms"');
-        }
+        $b .= $this->preFlightChecks();
 
         if ( $this->options['print'] ) {  print  $b;  }
         else                           {  return $b;  }
     }
+    ////////////////////////////////////////////////////////////////////////////
     // stub
+    ////////////////////////////////////////////////////////////////////////////
     function navHTML(){
-
+        return "";
     }
+    ////////////////////////////////////////////////////////////////////////////
+    // stub
+    ////////////////////////////////////////////////////////////////////////////
+    function preFlightChecks(){
+        return "";
+    }
+    ////////////////////////////////////////////////////////////////////////////
     function alertBanner($class,$mesg){
         $b = "<div class=\"alertBanner $class\">";
         $b .= "$mesg";
         $b .= '</div>';
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function htmlEnd($printBuffer = TRUE){
         $b = '';
         $b .= '<footer>' . NL;
@@ -144,17 +153,22 @@ class htmlDoc {
         if ( $this->options['print'] ) { print  $b; }
         else                           { return $b; }
     }
+    ////////////////////////////////////////////////////////////////////////////
     function css($file){
         $this->cssFiles[] = $file;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function js($file){
         //$this->head[] = "<script language='JavaScript' src='$file'></script>";
         $this->head[] = "<script src=\"" . REL . "$file\"></script>";
     }
+    ////////////////////////////////////////////////////////////////////////////
     function head($line){
         $this->head[] = $line;
     }
+    ////////////////////////////////////////////////////////////////////////////
     // this method should just wrap a meta tag around the provided argument, append to a buffer to add to html later
+    ////////////////////////////////////////////////////////////////////////////
     function meta($type,$content){
         if ( ! isset($this->metatags[$type])) $this->metatags[$type] = "";
         $this->metatags[$type] .= $content;

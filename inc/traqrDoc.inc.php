@@ -27,6 +27,17 @@ class menuItem {
         $b .= "</li>\n";
         return $b;
     }
+    function preFlightChecks(){
+        $b = '';
+        if (! file_exists(REL . '/' . DB)){
+            $b .= $this->alertBanner('failure','DB file does NOT exist, so site will not operate correctly.  See installation instructions.');
+            //$b .= "NO DB File!<br>\n";
+        }
+        if (! is_writable(REL . '/var')){
+            $b .= $this->alertBanner('failure','var not writable!  In a shell, as root: navigate to run directory and run "make perms"');
+        }
+        return "$b";
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////
 class menu {
@@ -95,6 +106,8 @@ class traqrDoc extends htmlDoc {
              $m->addItem('util','Entry Completed','/Safety.php');
              $m->addItem('util','Auth Testing','/Util/authTesting.php');
          }
+         $m->addMenu('help','Help','/Help/Index.php');
+         $m->addItem('help','Quick Start','/About/QuickStart.php');
 
          $lm = new menu('nav','navlink');
          if( isset($_SESSION['au_user'])){

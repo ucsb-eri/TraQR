@@ -75,11 +75,12 @@ class traQRpdo extends pdoCore {
         qr_id         INTEGER PRIMARY KEY,                       -- alias for rowid
         qr_ident      TEXT,                                      -- identifier
         qr_building   TEXT,                                      -- Building
-        qr_room       TEXT,                                      -- Room # in Building
+        qr_room       TEXT,                                      -- Room # in Building (or cluster name)
         qr_uuid       TEXT,                                      -- UUID for ident/building/room
         qr_epoch      TIMESTAMP DEFAULT (strftime('%s','now')),  -- date this entry was made
+        qr_detail     TEXT,                                      -- room or cluster detail
         qr_extra      TEXT,                                      -- extra field for possible use later
-        UNIQUE(qr_uuid,qr_ident,qr_building,qr_room) ON CONFLICT IGNORE
+        UNIQUE(qr_uuid) ON CONFLICT IGNORE
         );";
         //print_pre($q,"query: $q");
         $this->exec($q);

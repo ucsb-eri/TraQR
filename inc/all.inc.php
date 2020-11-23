@@ -39,8 +39,9 @@ require_once(__DIR__ . '/utils.inc.php');
 require_once(__DIR__ . '/auth.inc.php');
 require_once(__DIR__ . '/traqrAuth.inc.php');
 require_once(__DIR__ . '/pdo.inc.php');
-require_once(__DIR__ . '/pdo-extended.inc.php');
+require_once(__DIR__ . '/traQRpdo.inc.php');
 require_once(__DIR__ . '/traqrDoc.inc.php');
-require_once(__DIR__ . '/traqr-lib.inc.php');
+require_once(__DIR__ . '/traqrMgr.inc.php');
+require_once(__DIR__ . '/traqrCode.inc.php');
 
 ?>

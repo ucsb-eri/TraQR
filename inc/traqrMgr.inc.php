@@ -10,6 +10,7 @@ class traQRMgr {
         // this data is for if we are sending post data from another page to regenerate
         // an already existing QR
         $this->idData = array();
+        $this->qrData = array();
         $this->regenData = array();
         $this->checkPostForVars();
     }
@@ -67,27 +68,55 @@ class traQRMgr {
     }
     ////////////////////////////////////////////////////////////////////////////
     function identityFormPostCheck(){
-        $idKeys = array('id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra');
+        $idKeys = array('id_ident','id_name_first','id_name_last','id_phone','id_email','id_UCSBNetID','id_extra','id_dept');
+        //$strKeys = array('id_dept','id_phone');
+        // should setup separate/specialized sanitization filters for phone number
+
         // want to look to see if we have a post for the identity form
         if( ! array_key_exists('id_ident',     $_POST)) return false;
         if( ! array_key_exists('id_name_first',$_POST)) return false;
         if( ! array_key_exists('id_name_last', $_POST)) return false;
 
         //print_pre($_POST,__METHOD__ . ": POST vars");
+        //$this->sanitizePost($this->idData,array('id_ident','id_name_first','id_name_last','id_UCSBNetID','id_phone','id_extra'),FILTER_SANITIZE_STRING);
+        // build list of string keys for sanitizing strings
         $strKeys = array();  // could possibly just do $strKeys = $idKeys;
         foreach($idKeys as $idk) $strKeys[] = $idk;
+
         foreach($this->buildingEntries as $num){
             $strKeys[] = 'Building' . $num;
             $strKeys[] = 'Room' . $num;
+            $strKeys[] = 'Detail' . $num;
         }
-        //$this->sanitizePost($this->idData,array('id_ident','id_name_first','id_name_last','id_UCSBNetID','id_phone','id_extra'),FILTER_SANITIZE_STRING);
+        // do general filtering here at this step for everything
         $this->sanitizePost($this->idData,$strKeys,FILTER_SANITIZE_STRING);
+
+        // now cover any specialized entries
         $this->sanitizePost($this->idData,array('id_email'),FILTER_SANITIZE_EMAIL);
-        print_pre($this->idData,__METHOD__ . ': idData');
+
+
+        //print_pre($this->idData,__METHOD__ . ': idData');
 
         // do an upsert into idInfo
         $tpdo = new traQRpdo(getDSN());
         $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeys);
+
+        // work on qrInfo entries now
+        $this->qrData['qr_ident'] = $this->idData['id_ident'];
+        // $tpdo->upsert('qrInfo','qr_uuid',$this->qrData,$idKeys);
+        foreach($this->buildingEntries as $num){
+            //foreach(array('Building','Room','Detail') as $key)
+            $bkey = 'Building' . $num;
+            $rkey = 'Room' . $num;
+            $dkey = 'Detail' . $num;
+            if( $this->idData[$bkey] == '') continue;
+            $this->qrData['qr_building'] = $this->idData[$bkey];
+            $this->qrData['qr_room'] = $this->idData[$rkey];
+            $this->qrData['qr_detail'] = $this->idData[$dkey];
+            print_pre($this->qrData,__METHOD__ . ': qrData');
+
+            // So we have data now, and should create the uuid and upsert qr info
+        }
     }
     ////////////////////////////////////////////////////////////////////////////
     function identityForm(){
@@ -137,8 +166,9 @@ class traQRMgr {
         $rowCntr++;
 
         foreach( $this->buildingEntries as $num){
-            $b .= $this->identityFormInput(15,'Building'.$num,'Building Name'.$num);
+            $b .= $this->identityFormInput(15,'Building'.$num,'Building Name '.$num);
             $b .= $this->identityFormInput(8,'Room'.$num,'Room #'.$num);
+            $b .= $this->identityFormInput(12,'Detail'.$num,'Detail '.$num);
             $b .= "<br>\n";
         }
 
@@ -149,6 +179,7 @@ class traQRMgr {
         $b .= '</div><!-- qr-form-container -->' . NL;
         $b .= "<br>" . NL;
         $b .= "</div><!-- end IdentityFormDiv -->\n";
+        $b .= "<p>Additional Information for data entry:</p>";
         $b .= "</div><!-- end IdentityFormContainer -->\n";
 
         print $b;
@@ -236,102 +267,6 @@ class traQRMgr {
             $c->generateQRs();
             print $c->qrDisplayHTML();
         }
-    }
-}
-////////////////////////////////////////////////////////////////////////////////
-// This class is designed to manage a single traQR QR code
-////////////////////////////////////////////////////////////////////////////////
-class traQRcode {
-    public $baseurl = BASEURL;
-    public $modes = array('BIDIR');
-
-    ////////////////////////////////////////////////////////////////////////////
-    function __construct($key,$Identifier,$building,$room){
-        $this->key = $key;
-        $this->data = array();
-        $this->data['qr_uuid'] = genUUID($Identifier,$building,$room);
-        $this->data['sd_uuid'] = genUUID($Identifier,$building,$room);
-        $this->data['qr_building'] = $building;
-        $this->data['qr_room'] = $room;
-        $this->data['qr_ident'] = $Identifier;
-        $this->qrfiles = array();
-        $this->urls = array();
-        $this->qrurls = array();
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function urlArgs($sep = "&"){
-        $urlElements = array();
-        $urlElements['sd_uuid']  = $this->data['sd_uuid'];
-        $urlElements['sd_stage'] = $this->data['sd_stage'];
-
-        return http_build_query($urlElements,'','&',PHP_QUERY_RFC3986);
-        // basic
-        // foreach($this->data as $key => $val){
-        //     $elem[] = "${key}=" . "{$this->data[$key]}";
-        // }
-        // return implode("$sep",$elem);
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function genURL($script,$mode,$sep = "&"){
-        return "{$this->baseurl}/{$script}?sd_mode={$mode}&" . $this->urlArgs($sep);
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function generateQRs(){
-        // This was originally designed for INGRESS/EGRESS modes, but evolution has
-        // moved away from that, leaving loop in for time being though.
-        // eventually we should be able to remove Mode from the QR code itself
-        // hoping to ultimately have JUST the uuid field.
-        foreach( $this->modes as $mode ){
-            $ce = new traQRpdo(getDSN());
-
-            // might be nice to check to see if entry exists and just update.
-            // not a huge overhead with the replace, but rowids will just continue to climb
-            //$count = $ce->fetchValNew("SELECT COUNT(*) FROM qrInfo WHERE qr_ident = ? AND qr_building = ? AND qr_room = ? AND qr_uuid' = ?;",array($this->data['Identifier'],$this->data['Building'],$this->data['Room'],$this->data['UUID']));
-            $ce->q("INSERT INTO qrInfo (qr_ident,qr_building,qr_room,qr_uuid) VALUES (?,?,?,?)",array($this->data['qr_ident'],$this->data['qr_building'],$this->data['qr_room'],$this->data['qr_uuid']));
-            $ce->q("INSERT INTO idInfo (id_ident) VALUES (?)",array($this->data['qr_ident']));
-
-            $this->qrfiles[$mode] = '../var/qrs/' . $this->key . '-' . $mode . '.png';
-            $this->data['sd_stage'] = 'INIT';
-            //$this->data['Variant'] = 'DIRECT';
-
-            // Not sure I really need both of these, need to scope that out
-            $this->urls[$mode] = $this->genURL("Enter.php",$mode,"&amp;");
-            $this->qrurls[$mode] = $this->genURL("Enter.php",$mode);
-
-            // //$this->data['sd_stage'] = 'NOTSET';
-            // $this->data['Variant'] = 'VARIANT1';
-            // $this->alturls1[$mode] = $this->genURL("Enter.php",$mode);
-            //
-            //$this->data['sd_stage'] = 'NOTSET';
-            // $this->data['Variant'] = 'VARIANT2';
-            // $this->alturls2[$mode] = $this->genURL("Enter.php",$mode);
-            //
-            QRcode::png($this->genURL("Enter.php",$mode),$this->qrfiles[$mode]);
-        }
-    }
-    ////////////////////////////////////////////////////////////////////////////
-    function qrDisplayHTML(){
-        if ( $this->data['qr_ident']    == '' ) return '';
-        if ( $this->data['qr_building'] == '' ) return '';
-        if ( $this->data['qr_room']     == '' ) return '';
-        $netid = preg_replace('/@ucsb.edu/','',$this->data['qr_ident']);
-        $b = '';
-        $b .= '<div class="qrs-container"><!-- begin container for QR set (both ingress and egress) -->' . NL;
-        foreach( $this->modes as $mode ){
-            // deal with database submission
-            $b .= '  <div class="qr-container"><!-- begin container for single QR (either ingress or egress) -->' . NL;
-            $b .= '      <img class="qr-image" src="' . $this->qrfiles[$mode] . '" alt="QR code" />' . NL;
-            $b .= '      <div class="qr-info">' . NL;
-            $b .= '      <a href="' . $this->urls[$mode] . '">';
-            $b .= '      ' . '  ' . $netid . '<br>' . NL;
-            $b .= '      ' . $this->data['qr_building'] . '&nbsp;&nbsp;'  . $this->data['qr_room'] .'<br>' . NL;
-
-            $b .= '</a>' . '<br>' . NL;
-            $b .= '      </div>' . NL;
-            $b .= '  </div><!-- end container for single QR (either ingress or egress) -->' . NL;
-        }
-        $b .= '</div><!-- end container for QR set -->' . NL;
-        return $b;
     }
 }
 ?>
