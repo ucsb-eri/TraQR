@@ -56,6 +56,34 @@ function alertBanner($class = 'failure',$mesg = 'Fatal Error'){
     $b .= '</div>';
     return $b;
 }
+////////////////////////////////////////////////////////////////////////////////
+function readCSV($csvfile,$header = TRUE){
+    $data = array();
+    if ( ! file_exists($csvfile)) return $data;
+    if (($handle = fopen($csvfile, "r")) !== FALSE) {
+        if (($headerData = fgetcsv($handle, 8000, ",")) !== FALSE){
+            $headerFields = count($headerData);
+        }
+        else    return $data;
+        // we could try to validate data here, compare number of fields for header and see if datarow len matches...
+        while (($datarow = fgetcsv($handle, 8000, ",")) !== FALSE) {
+            $num = count($datarow);
+            $data[] = array_combine($headerData,$datarow);
+        }
+        fclose($handle);
+    }
+    return $data;
+}
+////////////////////////////////////////////////////////////////////////////////
+function endsWith($string, $endString) { 
+    $len = strlen($endString);
+    if ($len == 0) {
+        return true;
+    }
+    return (substr($string, -$len) === $endString);
+}
+
+
 
 
 ?>

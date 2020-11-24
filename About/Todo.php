@@ -25,6 +25,13 @@
                 </li>
             </ul>
         </li>
+        <li>UI/UX:
+            <ul>
+                <li>Remove old generateQR menu item</li>
+                <li>Add links to Help Index</li>
+                <li>Add version somewhere (this is included below as well)</li>
+            </ul>
+        </li>
     </ul>
 </section>
 
@@ -39,14 +46,27 @@
 </li>
 <li>QR code generation
   <ul>
-  <li>Input checking on room number(numerical with optionally one trailing alpha)</li>
-  <li class="done">Switch to UCSBNetID based (aaron_martin@ucsb.edu)</li>
-  <li>Add in QR code display to new Identity form
-      <ul>
-          <li>Modularize to just show based on qr_uuid, pass in as an array?</li>
-      </ul>
-  </li>
-  <li>Remove old QR Code Generation once the above is done</li>
+      <li>clean up new QR display code:
+          <ul>
+              <li>remove st_mode if possible (ie: BIDIR)</li>
+              <li>remove looping over mode... part of above</li>
+              <li>utilize qr_uuid in file names:
+                  <ul>
+                      <li>This might remove need to index qr filenames in loops</li>
+                      <li>Would allow for checking for existence of file before doing generation</li>
+                  </ul>
+              </li>
+
+          </ul>
+      </li>
+      <li>Input checking on room number(numerical with optionally one trailing alpha)</li>
+      <li class="done">Switch to UCSBNetID based (aaron_martin@ucsb.edu)</li>
+      <li>Add in QR code display to new Identity form
+          <ul>
+              <li>Modularize to just show based on qr_uuid, pass in as an array?</li>
+          </ul>
+      </li>
+      <li>Remove old QR Code Generation once the above is done</li>
 
 
   </ul>

@@ -35,6 +35,7 @@ function getDSN(){
 }
 
 require_once(__DIR__ . '/../config.php');
+require_once(__DIR__ . '/../version.php');
 require_once(__DIR__ . '/utils.inc.php');
 require_once(__DIR__ . '/auth.inc.php');
 require_once(__DIR__ . '/traqrAuth.inc.php');

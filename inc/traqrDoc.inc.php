@@ -77,6 +77,13 @@ class traqrDoc extends htmlDoc {
          $this->js('js/scripts.js');
      }
      ///////////////////////////////////////////////////////////////////////////
+     function version(){
+         $b = "";
+         $b = "<strong>Version: </strong>";
+         $b .= $GLOBALS['version'];
+         return "$b";
+     }
+     ///////////////////////////////////////////////////////////////////////////
      function menu(){
          $m = new menu('nav','navlink');
          $m->addMenu('index','Home','/Index.php');
@@ -86,12 +93,13 @@ class traqrDoc extends htmlDoc {
              $m->addItem('index','Todo','/About/Todo.php');
              $m->addMenu('admin','Admin','/Admin/Index.php');
              $m->addItem('admin','Initial Identity','/Admin/InitialIdentityEntry.php');
-             $m->addItem('admin','Gen New QRs','/Admin/GenQR.php');
+             //$m->addItem('admin','Gen New QRs','/Admin/GenQR.php');
              $m->addSep('admin');
              $m->addItem('admin','Auth Table','/Admin/authMgmt.php');
              $m->addItem('admin','QR Table','/Admin/qrGenMgmt.php');
              $m->addItem('admin','ID Table','/Admin/IdentifierMgmt.php');
-             $m->addItem('admin','Import File','/Admin/ImportFile.php');
+             $m->addItem('admin','Upload Import CSV','/Admin/UploadFile.php');
+             $m->addItem('admin','Proc Uploaded CSV','/Admin/ProcessUploadedCSV.php');
              $m->addSep('admin');
              $m->addItem('admin','Report All','/Admin/ReportAll.php');
              $m->addItem('admin','Report Daily','/Admin/ReportDaily.php');

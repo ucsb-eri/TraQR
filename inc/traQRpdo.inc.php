@@ -840,6 +840,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         return $default;
     }
     ////////////////////////////////////////////////////////////////////////////
+    //displayQRcodesMode
     function displayIdInfo(){
         $table = 'idInfo';
         $rowkey = 'id_id';
@@ -857,17 +858,23 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             // building a regen form for each row is gonna be more involved than for the qrInfo.
             // here we need to run a query to get all (up to MAX_BUILDING_ROOM_COMBOS) entries for a given identifier.
 
-            $regenHash = $this->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_ident = ? LIMIT ?;",array($h['id_ident'],MAX_BUILDING_ROOM_COMBOS));
-            //print_pre($regenHash,"Regen Hash for user: ".$h['id_ident']);
-            $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
-            <input type=\"hidden\" name=\"Identifier\" value=\"{$h['id_ident']}\"></input>\n";
-            $num = 1;
-            foreach($regenHash as $rh){
-                $h['regen'] .= "<input type=\"hidden\" name=\"Building$num\" value=\"{$rh['qr_building']}\"></input>\n";
-                $h['regen'] .= "<input type=\"hidden\" name=\"Room$num\" value=\"{$rh['qr_room']}\"></input>\n";
-                $num++;
-            }
-            $h['regen'] .= "<button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+            // this could be reconfigured as just a fetch val (count())
+            $h['locs'] = $this->fetchValNew("SELECT COUNT(*) FROM qrInfo WHERE qr_ident = ?;",array($h['id_ident']));
+            //$regenHash = $this->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_ident = ? LIMIT ?;",array($h['id_ident'],MAX_BUILDING_ROOM_COMBOS));
+            // //print_pre($regenHash,"Regen Hash for user: ".$h['id_ident']);
+            // $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
+            // <input type=\"hidden\" name=\"Identifier\" value=\"{$h['id_ident']}\"></input>\n";
+            // $num = 1;
+            // foreach($regenHash as $rh){
+            //     $h['regen'] .= "<input type=\"hidden\" name=\"Building$num\" value=\"{$rh['qr_building']}\"></input>\n";
+            //     $h['regen'] .= "<input type=\"hidden\" name=\"Room$num\" value=\"{$rh['qr_room']}\"></input>\n";
+            //     $num++;
+            // }
+            // $h['regen'] .= "<button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+
+            $h['dispqr'] = "<form action=\"/Admin/DisplayQRCodes.php\" method=\"post\">";
+            $h['dispqr'] .= "<input type=\"hidden\" name=\"id_ident\" value=\"{$h['id_ident']}\"></input>\n";
+            $h['dispqr'] .= "<button class=\"regen-button\" type=\"submit\">DispQR</button></form>";
 
 
             if( authorized('TRAQR','root')) {
@@ -876,7 +883,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
                 $h['edit'] = $this->formPostButton('Edit','edit-button','EDIT_ROW',$h[$rowkey]);
             }
 
-            $h['locs'] = count($regenHash);
+            //$h['locs'] = count($regenHash);
             $h['#'] = $linecntr;
             $h['.td-#'] = 'rowcnt';
 
@@ -890,7 +897,7 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
         if( authorized('TRAQR','root')) {
             array_push($flds,'delete','edit');
         }
-        array_push($flds,'regen','#');
+        array_push($flds,'dispqr','#');
         $b .= $this->genericDisplayTable($hash,$flds,$orderField);
         $b .= "</div><!-- end generic-display-table -->\n";
         print $b;
@@ -913,15 +920,18 @@ echo "SELECT id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,
             $h['#'] = $line++;
         }
         if ( authorized('TRAQR','root')){
-            array_push($flds,'delete','regen');
+            array_push($flds,'delete','dispqr');
             foreach($hash as &$h){
                 $h['delete'] = $this->formPostButton('Delete','delete-button','DELETE_ROW',$h[$rowkey]);
                 //$h['delete'] = "<form action=\"{$_SERVER['REQUEST_URI']}\" method=\"post\"><button type=\"submit\" name=\"DELETE_ROW\" value=\"{$h['qr_id']}\">Delete</button></form>";
-                $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
-                <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qr_ident']}\"></input>
-                <input type=\"hidden\" name=\"Building1\" value=\"{$h['qr_building']}\"></input>
-                <input type=\"hidden\" name=\"Room1\" value=\"{$h['qr_room']}\"></input>
-                <button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+                // $h['regen'] = "<form action=\"/Admin/GenQR.php\" method=\"post\">
+                // <input type=\"hidden\" name=\"Identifier\" value=\"{$h['qr_ident']}\"></input>
+                // <input type=\"hidden\" name=\"Building1\" value=\"{$h['qr_building']}\"></input>
+                // <input type=\"hidden\" name=\"Room1\" value=\"{$h['qr_room']}\"></input>
+                // <button class=\"regen-button\" type=\"submit\">Regen QR</button></form>";
+                $h['dispqr'] = "<form action=\"/Admin/DisplayQRCodes.php\" method=\"post\">
+                <input type=\"hidden\" name=\"qr_uuid\" value=\"{$h['qr_uuid']}\"></input>
+                <button class=\"regen-button\" type=\"submit\">DispQR</button></form>";
             }
         }
         array_unshift($flds,'#');

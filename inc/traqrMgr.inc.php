@@ -200,10 +200,26 @@ class traQRMgr {
     }
     ////////////////////////////////////////////////////////////////////////////
     function displayQRcodesMode($type = 'POST',$which = array()){
+        $tpdo = new traQRpdo(getDSN());
         $b = '';
         switch($type){
             case 'POST':
                 // not sure how this will go yet, but leaving for time being
+                // this will need to make a determination on whether this is an IDENT call or a UUID
+                // print_pre($_POST,"POST vars");
+                if (isset($_POST['id_ident'])){
+                    $dispHash = $tpdo->getKeyedHash('qr_uuid',"SELECT * FROM qrInfo WHERE qr_ident = ?;",array($_POST['id_ident']));
+                    // print_pre($dispHash,"display hash");
+                    foreach($dispHash as $dh){
+                        $this->qrUUIDsToDisplay[] = $dh['qr_uuid'];
+                    }
+                    $b .= $this->displayQRcodes($this->qrUUIDsToDisplay);
+                }
+                if (isset($_POST['qr_uuid'])){
+                    $this->qrUUIDsToDisplay[] = $_POST['qr_uuid'];
+                    $b .= $this->displayQRcodes($this->qrUUIDsToDisplay);
+                }
+
                 break;
             case 'IDENT':  // this case is for if we are passed in an id_ident, get list of qr_uuids to pass
                 break;

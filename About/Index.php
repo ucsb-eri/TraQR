@@ -4,6 +4,7 @@
 
     $hd = new traqrDoc("About this site");
     $hd->htmlBeg();
+    print $hd->version();
 ?>
 <section>
     <h2>Introduction/History</h2>

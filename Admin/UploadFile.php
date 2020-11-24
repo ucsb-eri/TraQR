@@ -15,7 +15,7 @@
             $b .= "Upload file detected<br>";
 
             $target_dir = REL . "var/uploads/";
-            $target_file = $target_dir . 'uploaded.psv';
+            $target_file = $target_dir . 'uploaded.csv';
             $uploadOk = 1;
             if(isset($_POST["submit"])) {
                 if($_FILES["fileToUpload"]["error"] == 0){
