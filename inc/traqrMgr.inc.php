@@ -15,6 +15,7 @@ class traQRMgr {
         $this->regenData = array();
         $this->checkPostForVars();
     }
+    ////////////////////////////////////////////////////////////////////////////
     function htmlFormInput($size,$name,$desc,$value = ''){
         $b = '';
         $val =  ( $value != '') ? $value : "{$GLOBALS[$name]}" ;
@@ -22,6 +23,7 @@ class traQRMgr {
         $b .= '<input type="text" size="' . $size . '" id="' . $name . '" name="' . $name . '" value="' . $val . '" placeholder="' . $desc . '">';
         return $b;
     }
+    ////////////////////////////////////////////////////////////////////////////
     function identityFormInput($size,$name,$desc,$value = ''){
         $b = '';
         $globalVal = ( array_key_exists($name,$GLOBALS)) ? "{$GLOBALS[$name]}" : '';
@@ -103,7 +105,15 @@ class traQRMgr {
             return "";
         }
         else {
-            $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeys);
+            // Need to exclude any keys that have empty data to avoid removing previously set data
+            // perfect situation would be to propogate data into fields if id_ident is recognized, but
+            // would seemingly need some pretty gnarly javascript to do that without a specific post checking that data
+            // Possible alternative is to make this a two step deal, start with ONLY id_ident, post to next page with info all filled in
+            $idKeysUsed = array();
+            foreach($idKeys as $idk){
+                if (isset($this->idData[$idk]) && $this->idData[$idk] != '') $idKeysUsed[] = $idk;
+            }
+            $tpdo->upsert('idInfo','id_ident',$this->idData,$idKeysUsed);
         }
 
         ////////////////////////////////////////////////////////////////////////
