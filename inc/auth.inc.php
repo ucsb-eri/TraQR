@@ -58,7 +58,10 @@ function authorizedByTraqrInternal($authLevelRequired = ''){
         foreach( array_keys($GLOBALS['authorizedIPs']) as $role){
             if ( ($authMasks[$role] & $authFlags[$authLevelRequired]) > 0 ){
                 // print_pre($GLOBALS['authorizedIPs'][$role],"checking IP list for {$_SERVER['REMOTE_ADDR']} for required auth level: $authLevelRequired");
-                if( in_array($_SERVER['REMOTE_ADDR'],$GLOBALS['authorizedIPs'][$role])) return true;
+                if( in_array($_SERVER['REMOTE_ADDR'],$GLOBALS['authorizedIPs'][$role])){
+                    $_SESSION['au_role'] = $role;
+                    return true;
+                }
             }
         }
     }

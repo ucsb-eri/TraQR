@@ -34,9 +34,15 @@
 
         $ce = new traQRpdo(getDSN());
         // $b .= $ce->importFileForm();
+        $b .= "<br><hr>
+        <span style=\"color: red;\">
+        <h3>NOTE: This is not ready for \"Prime Time\" yet.</h3>
+        Contact someone on the dev team to use this functionality.
+        </span>
+        ";
 
         $b .= "<hr><form method=\"post\" enctype=\"multipart/form-data\">
-  Select Pipe \"|\" Separated Value import text file to upload:
+  Select Pipe \",\" Separated Value (CSV) import text file to upload:
   <input type=\"file\" name=\"fileToUpload\" id=\"fileToUpload\">
   <input type=\"submit\" value=\"Upload Data File\" name=\"submit\">
 </form>";
@@ -44,8 +50,8 @@
 
         $b .= "<br><hr><h3>Import File Description</h3>
         <ul>
-        <li>File is expected to be a text file containing multiple id+qr records (one record/line)</li>
-        <li>Each record has the following 10 &quot;|&quot; delimited fields:
+        <li>File is expected to be a CSV text file containing multiple id+qr records (one record/line)</li>
+        <li>Each record has the following 10 &quot;,&quot; delimited fields:
             <ul>
             <li>id_ident - individual's unique identifier (Required: usually email)</li>
             <li>id_name_first - individuals first name (optional)</li>
@@ -67,7 +73,7 @@
 
         <li>Header should look like:
             <ul>
-                <li>id_ident|id_name_first|id_name_last|id_phone|id_email|id_UCSBNetID|id_dept|qr_building|qr_room|qr_detail</li>
+                <li>id_ident,id_name_first,id_name_last,id_phone,id_email,id_UCSBNetID,id_dept,qr_building,qr_room,qr_detail</li>
             </ul>
         </li>
         <li>Prepping export file from Google Sheets:

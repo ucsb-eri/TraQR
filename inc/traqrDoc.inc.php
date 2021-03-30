@@ -122,6 +122,14 @@ class traqrDoc extends htmlDoc {
              $lm->addMenu('login','User: ' . $_SESSION['au_user'] . ' (' . $_SESSION['au_role'] . ')','');
              $lm->addItem('login','Sign Out','/Logout.php');
          }
+         elseif(authorizedByTraqrInternal('user')){
+             $lm->addMenu('login','IP: ' . $_SERVER['REMOTE_ADDR'] . ' (' . $_SESSION['au_role'] . ')','');
+         }
+         elseif (isset($_SESSION['au_role'])){
+             // want to catch the case of an IP authorized
+             $lm->addMenu('login','User: ' . 'IP-ACL' . ' (' . $_SESSION['au_role'] . ')','');
+
+         }
          else {
              $lm->addMenu('login','Login','/Login.php');
          }
