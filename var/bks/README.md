@@ -1,7 +1,8 @@
 # Backups directory
 This directory should be made inaccessible via web, but should still be accessible via PHP
 
-```cat <<EOF > /etc/cron.d/traqr
+```
+cat <<EOF > /etc/cron.d/traqr
 SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/eri/sbin
 MAILTO=root
