@@ -1,6 +1,7 @@
 # Backups directory
 This directory should be made inaccessible via web, but should still be accessible via PHP
 
+Backups were done via a simple cron job
 ```
 cat <<EOF > /etc/cron.d/traqr
 SHELL=/bin/bash
