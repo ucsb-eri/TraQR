@@ -4,5 +4,6 @@ config.php
 var/dbs/*.sqlite3*
 var/qrs/*.png
 var/bks/*.gz
+var/bks/archive-*
 var/uploads/*
 !var/uploads/Index.php
